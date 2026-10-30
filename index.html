@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="AL-ILYAS VTU - Buy affordable mobile data and airtime in Nigeria.">
-<title>AL-ILYAS VTU | Home</title>
+<meta name="description" content="AL-ILYAS VTU - Affordable data and airtime in Nigeria">
+<title>AL-ILYAS VTU | Buy Data</title>
 
 <style>
 * {
@@ -34,99 +34,96 @@ header {
   font-weight: bold;
 }
 
-.menu {
-  font-size: 13px;
-}
-
 .hero {
   background: linear-gradient(135deg,#087c45,#13ad68);
   color: white;
   text-align: center;
-  padding: 55px 20px;
+  padding: 35px 15px;
 }
 
 .hero h1 {
-  font-size: 30px;
-  margin-bottom: 15px;
-}
-
-.hero p {
-  line-height: 1.7;
-  font-size: 15px;
+  margin-bottom: 10px;
 }
 
 .container {
-  max-width: 650px;
+  max-width: 600px;
   margin: 25px auto;
   padding: 15px;
 }
 
-.balance {
+.card {
   background: white;
   padding: 22px;
-  border-radius: 12px;
-  box-shadow: 0 3px 12px #0001;
+  border-radius: 13px;
   margin-bottom: 20px;
-}
-
-.balance h3 {
-  color: #087c45;
-  margin-bottom: 10px;
-}
-
-.balance h2 {
-  font-size: 27px;
-}
-
-.services {
-  display: grid;
-  grid-template-columns: repeat(2,1fr);
-  gap: 15px;
-}
-
-.service {
-  background: white;
-  padding: 25px 12px;
-  text-align: center;
-  border-radius: 12px;
   box-shadow: 0 3px 12px #0001;
+}
+
+h2 {
+  color: #087c45;
+  margin-bottom: 18px;
+}
+
+label {
+  display: block;
+  margin: 15px 0 7px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+input, select {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #ddd;
+  border-radius: 7px;
+  font-size: 15px;
+  background: white;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  margin-top: 18px;
+  border: none;
+  border-radius: 7px;
+  background: #087c45;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
   cursor: pointer;
 }
 
-.service span {
-  font-size: 30px;
-  display: block;
-  margin-bottom: 12px;
+button:hover {
+  background: #056536;
 }
 
-.service h3 {
-  color: #087c45;
-  font-size: 16px;
+.secondary {
+  background: #344b3e;
 }
 
-.networks {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
+#summary {
+  display: none;
+  background: #e9f8ef;
+  padding: 17px;
+  border-radius: 9px;
   margin-top: 20px;
+  line-height: 2;
+  overflow-wrap: anywhere;
 }
 
-.networks h3 {
-  color: #087c45;
-  margin-bottom: 15px;
-}
-
-.network-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.network-list span {
-  background: #e9f7ef;
-  padding: 10px 14px;
+.notice {
+  background: #fff6df;
+  padding: 12px;
   border-radius: 7px;
-  font-weight: bold;
+  font-size: 13px;
+  margin-top: 15px;
+  line-height: 1.6;
+}
+
+.admin-price {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 footer {
@@ -148,79 +145,315 @@ footer p {
 
 <header>
   <div class="logo">AL-ILYAS VTU</div>
-  <div class="menu">Digital Services</div>
+  <div>Data Services</div>
 </header>
 
 <section class="hero">
-  <h1>Welcome to AL-ILYAS VTU</h1>
-  <p>Your trusted platform for affordable data
-  and airtime services in Nigeria.</p>
+  <h1>Buy Affordable Data</h1>
+  <p>Fast, Reliable and Affordable Digital Services.</p>
 </section>
 
 <main class="container">
 
-  <section class="balance">
-    <h3>My Wallet</h3>
-    <h2>₦0.00</h2>
-    <p>Available Wallet Balance</p>
-  </section>
+<section class="card">
 
-  <h2 style="margin-bottom:15px;">Our Services</h2>
+<h2>Buy Data Bundle</h2>
 
-  <section class="services">
+<form id="dataForm">
 
-    <div class="service" onclick="openService('data')">
-      <span>📶</span>
-      <h3>Buy Data</h3>
-    </div>
+<label>Select Network</label>
+<select id="network" required>
+  <option value="">Choose Network</option>
+  <option value="MTN">MTN</option>
+  <option value="Airtel">Airtel</option>
+  <option value="Glo">Glo</option>
+  <option value="9mobile">9mobile</option>
+</select>
 
-    <div class="service" onclick="openService('airtime')">
-      <span>📱</span>
-      <h3>Buy Airtime</h3>
-    </div>
+<label>Phone Number</label>
+<input
+  type="tel"
+  id="phone"
+  placeholder="Enter 11-digit phone number"
+  maxlength="11"
+  inputmode="numeric"
+  required
+>
 
-    <div class="service" onclick="openService('wallet')">
-      <span>💳</span>
-      <h3>Fund Wallet</h3>
-    </div>
+<label>Select Data Plan</label>
+<select id="plan" required>
+  <option value="">Choose Data Plan</option>
+</select>
 
-    <div class="service" onclick="openService('orders')">
-      <span>📋</span>
-      <h3>My Orders</h3>
-    </div>
+<label>Amount</label>
+<input type="text" id="amount"
+placeholder="Data price will appear here" readonly>
 
-  </section>
+<button type="submit">Continue to Order</button>
 
-  <section class="networks">
-    <h3>Available Networks</h3>
-    <div class="network-list">
-      <span>MTN</span>
-      <span>Airtel</span>
-      <span>Glo</span>
-      <span>9mobile</span>
-    </div>
-  </section>
+</form>
+
+<div id="summary">
+  <h3>Order Summary</h3>
+  <p><b>Order ID:</b> <span id="orderID"></span></p>
+  <p><b>Network:</b> <span id="showNetwork"></span></p>
+  <p><b>Phone:</b> <span id="showPhone"></span></p>
+  <p><b>Data:</b> <span id="showPlan"></span></p>
+  <p><b>Amount:</b> <span id="showAmount"></span></p>
+
+  <div class="notice">
+    Demo order only. No payment has been received
+    and no data has been delivered.
+  </div>
+</div>
+
+</section>
+
+<!-- ADMIN PRICE EDITOR: FRONTEND DEMO -->
+
+<section class="card">
+
+<h2>Admin Price Settings</h2>
+
+<p style="font-size:13px;line-height:1.6;">
+  Edit your data bundle selling prices below.
+  Changes are saved in this browser.
+</p>
+
+<label>Select Network</label>
+<select id="adminNetwork">
+  <option value="MTN">MTN</option>
+  <option value="Airtel">Airtel</option>
+  <option value="Glo">Glo</option>
+  <option value="9mobile">9mobile</option>
+</select>
+
+<div class="admin-price">
+
+  <div>
+    <label>500MB (₦)</label>
+    <input type="number" id="p500" min="1">
+  </div>
+
+  <div>
+    <label>1GB (₦)</label>
+    <input type="number" id="p1" min="1">
+  </div>
+
+  <div>
+    <label>2GB (₦)</label>
+    <input type="number" id="p2" min="1">
+  </div>
+
+  <div>
+    <label>5GB (₦)</label>
+    <input type="number" id="p5" min="1">
+  </div>
+
+</div>
+
+<button type="button" onclick="savePrices()">
+  Save Prices
+</button>
+
+<p id="adminMessage"
+style="margin-top:12px;font-size:13px;"></p>
+
+<div class="notice">
+  Prototype only: these settings are not protected
+  by admin login. Do not use this frontend editor
+  for real customer transactions.
+</div>
+
+</section>
 
 </main>
 
 <footer>
   <h3>AL-ILYAS VTU</h3>
-  <p>Fast, Reliable and Affordable Services.</p>
-  <p>© 2026 AL-ILYAS VTU</p>
+  <p>Your Trusted Data & Airtime Platform</p>
+  <p>© 2026 AL-ILYAS VTU. All Rights Reserved.</p>
 </footer>
 
 <script>
-function openService(service) {
 
-  const messages = {
-    data: "Data purchase section is coming soon.",
-    airtime: "Airtime purchase section is coming soon.",
-    wallet: "Wallet funding section is coming soon.",
-    orders: "Order history section is coming soon."
+// SAMPLE PRICES - REPLACE WITH YOUR REAL PRICES
+
+const defaultPrices = {
+  MTN: {
+    "500MB": 150,
+    "1GB": 300,
+    "2GB": 600,
+    "5GB": 1500
+  },
+  Airtel: {
+    "500MB": 150,
+    "1GB": 300,
+    "2GB": 600,
+    "5GB": 1500
+  },
+  Glo: {
+    "500MB": 150,
+    "1GB": 300,
+    "2GB": 600,
+    "5GB": 1500
+  },
+  "9mobile": {
+    "500MB": 150,
+    "1GB": 300,
+    "2GB": 600,
+    "5GB": 1500
+  }
+};
+
+const STORAGE_KEY = "aliyas_vtu_demo_prices";
+
+function loadPrices() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const parsed = saved ? JSON.parse(saved) : null;
+
+    if (parsed && typeof parsed === "object") {
+      for (const net of Object.keys(defaultPrices)) {
+        for (const size of Object.keys(defaultPrices[net])) {
+          const value = parsed[net]?.[size];
+
+          if (Number.isSafeInteger(value) && value > 0) {
+            defaultPrices[net][size] = value;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.log("Using default demo prices.");
+  }
+}
+
+loadPrices();
+
+const network = document.getElementById("network");
+const plan = document.getElementById("plan");
+const amount = document.getElementById("amount");
+const form = document.getElementById("dataForm");
+
+function updatePlans() {
+  const selected = network.value;
+
+  plan.innerHTML = '<option value="">Choose Data Plan</option>';
+  amount.value = "";
+
+  if (!selected) return;
+
+  Object.keys(defaultPrices[selected]).forEach(size => {
+    const option = document.createElement("option");
+    option.value = size;
+    option.textContent = size;
+    plan.appendChild(option);
+  });
+}
+
+function updatePrice() {
+  const net = network.value;
+  const size = plan.value;
+
+  if (net && size) {
+    amount.value =
+      "₦" + defaultPrices[net][size].toLocaleString("en-NG");
+  } else {
+    amount.value = "";
+  }
+}
+
+network.addEventListener("change", updatePlans);
+plan.addEventListener("change", updatePrice);
+
+// ADMIN PRICE EDITING
+
+const adminNetwork = document.getElementById("adminNetwork");
+
+function loadAdminPrices() {
+  const net = adminNetwork.value;
+  const p = defaultPrices[net];
+
+  document.getElementById("p500").value = p["500MB"];
+  document.getElementById("p1").value = p["1GB"];
+  document.getElementById("p2").value = p["2GB"];
+  document.getElementById("p5").value = p["5GB"];
+}
+
+adminNetwork.addEventListener("change", loadAdminPrices);
+
+function savePrices() {
+  const net = adminNetwork.value;
+
+  const values = {
+    "500MB": Number(document.getElementById("p500").value),
+    "1GB": Number(document.getElementById("p1").value),
+    "2GB": Number(document.getElementById("p2").value),
+    "5GB": Number(document.getElementById("p5").value)
   };
 
-  alert(messages[service]);
+  if (!Object.values(values).every(
+    v => Number.isSafeInteger(v) && v > 0
+  )) {
+    alert("Enter valid prices greater than zero.");
+    return;
+  }
+
+  defaultPrices[net] = values;
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultPrices));
+  } catch (error) {
+    alert("Could not save prices in this browser.");
+    return;
+  }
+
+  loadAdminPrices();
+  updatePrice();
+
+  document.getElementById("adminMessage").textContent =
+    "Prices saved successfully for " + net + ".";
 }
+
+// CUSTOMER ORDER
+
+form.addEventListener("submit", function(event) {
+  event.preventDefault();
+
+  const net = network.value;
+  const size = plan.value;
+  const phone = document.getElementById("phone").value.trim();
+
+  if (!/^\d{11}$/.test(phone)) {
+    alert("Enter a valid 11-digit Nigerian phone number.");
+    return;
+  }
+
+  if (!net || !size) {
+    alert("Select your network and data plan.");
+    return;
+  }
+
+  const price = defaultPrices[net][size];
+  const order = "ALIYAS" + Date.now();
+
+  document.getElementById("orderID").textContent = order;
+  document.getElementById("showNetwork").textContent = net;
+  document.getElementById("showPhone").textContent = phone;
+  document.getElementById("showPlan").textContent = size;
+  document.getElementById("showAmount").textContent =
+    "₦" + price.toLocaleString("en-NG");
+
+  document.getElementById("summary").style.display = "block";
+
+  document.getElementById("summary").scrollIntoView({
+    behavior: "smooth"
+  });
+});
+
+loadAdminPrices();
+
 </script>
 
 </body>

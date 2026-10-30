@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="AL-ILYAS VTU - Buy affordable mobile data and airtime in Nigeria.">
+<title>AL-ILYAS VTU | Home</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  background: #f3f7f5;
+  color: #183328;
+}
+
+header {
+  background: #087c45;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 21px;
+  font-weight: bold;
+}
+
+.menu {
+  font-size: 13px;
+}
+
+.hero {
+  background: linear-gradient(135deg,#087c45,#13ad68);
+  color: white;
+  text-align: center;
+  padding: 55px 20px;
+}
+
+.hero h1 {
+  font-size: 30px;
+  margin-bottom: 15px;
+}
+
+.hero p {
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.container {
+  max-width: 650px;
+  margin: 25px auto;
+  padding: 15px;
+}
+
+.balance {
+  background: white;
+  padding: 22px;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px #0001;
+  margin-bottom: 20px;
+}
+
+.balance h3 {
+  color: #087c45;
+  margin-bottom: 10px;
+}
+
+.balance h2 {
+  font-size: 27px;
+}
+
+.services {
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 15px;
+}
+
+.service {
+  background: white;
+  padding: 25px 12px;
+  text-align: center;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px #0001;
+  cursor: pointer;
+}
+
+.service span {
+  font-size: 30px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+.service h3 {
+  color: #087c45;
+  font-size: 16px;
+}
+
+.networks {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.networks h3 {
+  color: #087c45;
+  margin-bottom: 15px;
+}
+
+.network-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.network-list span {
+  background: #e9f7ef;
+  padding: 10px 14px;
+  border-radius: 7px;
+  font-weight: bold;
+}
+
+footer {
+  background: #073d27;
+  color: white;
+  text-align: center;
+  padding: 25px;
+  margin-top: 30px;
+}
+
+footer p {
+  margin-top: 8px;
+  font-size: 13px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">AL-ILYAS VTU</div>
+  <div class="menu">Digital Services</div>
+</header>
+
+<section class="hero">
+  <h1>Welcome to AL-ILYAS VTU</h1>
+  <p>Your trusted platform for affordable data
+  and airtime services in Nigeria.</p>
+</section>
+
+<main class="container">
+
+  <section class="balance">
+    <h3>My Wallet</h3>
+    <h2>₦0.00</h2>
+    <p>Available Wallet Balance</p>
+  </section>
+
+  <h2 style="margin-bottom:15px;">Our Services</h2>
+
+  <section class="services">
+
+    <div class="service" onclick="openService('data')">
+      <span>📶</span>
+      <h3>Buy Data</h3>
+    </div>
+
+    <div class="service" onclick="openService('airtime')">
+      <span>📱</span>
+      <h3>Buy Airtime</h3>
+    </div>
+
+    <div class="service" onclick="openService('wallet')">
+      <span>💳</span>
+      <h3>Fund Wallet</h3>
+    </div>
+
+    <div class="service" onclick="openService('orders')">
+      <span>📋</span>
+      <h3>My Orders</h3>
+    </div>
+
+  </section>
+
+  <section class="networks">
+    <h3>Available Networks</h3>
+    <div class="network-list">
+      <span>MTN</span>
+      <span>Airtel</span>
+      <span>Glo</span>
+      <span>9mobile</span>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <h3>AL-ILYAS VTU</h3>
+  <p>Fast, Reliable and Affordable Services.</p>
+  <p>© 2026 AL-ILYAS VTU</p>
+</footer>
+
+<script>
+function openService(service) {
+
+  const messages = {
+    data: "Data purchase section is coming soon.",
+    airtime: "Airtime purchase section is coming soon.",
+    wallet: "Wallet funding section is coming soon.",
+    orders: "Order history section is coming soon."
+  };
+
+  alert(messages[service]);
+}
+</script>
+
+</body>
+</html>

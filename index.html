@@ -4,8 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="AL-ILYAS VTU - Affordable data and airtime in Nigeria">
-<title>AL-ILYAS VTU | Buy Data</title>
+<title>AL-ILYAS VTU</title>
 
 <style>
 * {
@@ -24,14 +23,7 @@ header {
   background: #087c45;
   color: white;
   padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo {
-  font-size: 21px;
-  font-weight: bold;
+  text-align: center;
 }
 
 .hero {
@@ -39,10 +31,6 @@ header {
   color: white;
   text-align: center;
   padding: 35px 15px;
-}
-
-.hero h1 {
-  margin-bottom: 10px;
 }
 
 .container {
@@ -61,12 +49,12 @@ header {
 
 h2 {
   color: #087c45;
-  margin-bottom: 18px;
+  margin-bottom: 17px;
 }
 
 label {
   display: block;
-  margin: 15px 0 7px;
+  margin: 14px 0 7px;
   font-weight: bold;
   font-size: 14px;
 }
@@ -97,30 +85,26 @@ button:hover {
   background: #056536;
 }
 
-.secondary {
-  background: #344b3e;
-}
-
-#summary {
+.summary {
   display: none;
   background: #e9f8ef;
-  padding: 17px;
+  padding: 16px;
   border-radius: 9px;
-  margin-top: 20px;
+  margin-top: 18px;
   line-height: 2;
   overflow-wrap: anywhere;
 }
 
 .notice {
-  background: #fff6df;
+  background: #fff5df;
   padding: 12px;
   border-radius: 7px;
+  margin-top: 13px;
   font-size: 13px;
-  margin-top: 15px;
   line-height: 1.6;
 }
 
-.admin-price {
+.admin-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
@@ -131,12 +115,6 @@ footer {
   color: white;
   text-align: center;
   padding: 25px;
-  margin-top: 30px;
-}
-
-footer p {
-  margin-top: 8px;
-  font-size: 13px;
 }
 </style>
 </head>
@@ -144,315 +122,400 @@ footer p {
 <body>
 
 <header>
-  <div class="logo">AL-ILYAS VTU</div>
-  <div>Data Services</div>
+<h2 style="color:white;margin:0;">AL-ILYAS VTU</h2>
+<p>Your Trusted Data & Airtime Platform</p>
 </header>
 
 <section class="hero">
-  <h1>Buy Affordable Data</h1>
-  <p>Fast, Reliable and Affordable Digital Services.</p>
+<h1>Welcome to AL-ILYAS VTU</h1>
+<p>Buy affordable Data and Airtime in Nigeria.</p>
 </section>
 
 <main class="container">
 
+<!-- DATA PURCHASE -->
+
 <section class="card">
+<h2>📶 Buy Data</h2>
 
-<h2>Buy Data Bundle</h2>
-
-<form id="dataForm">
-
-<label>Select Network</label>
-<select id="network" required>
-  <option value="">Choose Network</option>
-  <option value="MTN">MTN</option>
-  <option value="Airtel">Airtel</option>
-  <option value="Glo">Glo</option>
-  <option value="9mobile">9mobile</option>
+<label>Network</label>
+<select id="dataNetwork">
+<option value="">Select Network</option>
+<option>MTN</option>
+<option>Airtel</option>
+<option>Glo</option>
+<option>9mobile</option>
 </select>
 
 <label>Phone Number</label>
-<input
-  type="tel"
-  id="phone"
-  placeholder="Enter 11-digit phone number"
-  maxlength="11"
-  inputmode="numeric"
-  required
->
+<input id="dataPhone" type="tel"
+maxlength="11" inputmode="numeric"
+placeholder="Enter phone number">
 
-<label>Select Data Plan</label>
-<select id="plan" required>
-  <option value="">Choose Data Plan</option>
+<label>Data Plan</label>
+<select id="dataPlan">
+<option value="">Select Data Plan</option>
 </select>
 
-<label>Amount</label>
-<input type="text" id="amount"
-placeholder="Data price will appear here" readonly>
+<p style="margin-top:12px;font-weight:bold;">
+Price: <span id="dataPrice">₦0</span>
+</p>
 
-<button type="submit">Continue to Order</button>
+<button onclick="buyData()">Continue Data Order</button>
 
-</form>
+<div class="summary" id="dataSummary"></div>
+</section>
 
-<div id="summary">
-  <h3>Order Summary</h3>
-  <p><b>Order ID:</b> <span id="orderID"></span></p>
-  <p><b>Network:</b> <span id="showNetwork"></span></p>
-  <p><b>Phone:</b> <span id="showPhone"></span></p>
-  <p><b>Data:</b> <span id="showPlan"></span></p>
-  <p><b>Amount:</b> <span id="showAmount"></span></p>
+<!-- AIRTIME PURCHASE -->
 
-  <div class="notice">
-    Demo order only. No payment has been received
-    and no data has been delivered.
-  </div>
+<section class="card">
+<h2>📱 Buy Airtime</h2>
+
+<label>Network</label>
+<select id="airNetwork">
+<option value="">Select Network</option>
+<option>MTN</option>
+<option>Airtel</option>
+<option>Glo</option>
+<option>9mobile</option>
+</select>
+
+<label>Phone Number</label>
+<input id="airPhone" type="tel"
+maxlength="11" inputmode="numeric"
+placeholder="Enter phone number">
+
+<label>Airtime Amount (₦)</label>
+<input id="airAmount" type="number"
+min="50" max="100000"
+placeholder="Enter amount">
+
+<label>Discount (%)</label>
+<input id="discount" type="number"
+min="0" max="100" value="2">
+
+<div style="background:#e9f8ef;padding:15px;
+margin-top:15px;border-radius:8px;line-height:2;">
+<p>Discount: <b id="discountValue">₦0</b></p>
+<p>Customer Pays: <b id="payable">₦0</b></p>
 </div>
+
+<button onclick="buyAirtime()">Continue Airtime Order</button>
+
+<div class="summary" id="airSummary"></div>
 
 </section>
 
-<!-- ADMIN PRICE EDITOR: FRONTEND DEMO -->
+<!-- ADMIN PRICE SETTINGS -->
 
 <section class="card">
-
-<h2>Admin Price Settings</h2>
+<h2>⚙️ Admin Price Settings</h2>
 
 <p style="font-size:13px;line-height:1.6;">
-  Edit your data bundle selling prices below.
-  Changes are saved in this browser.
+Demo settings for editing data prices and airtime discount.
 </p>
 
-<label>Select Network</label>
+<label>Network</label>
 <select id="adminNetwork">
-  <option value="MTN">MTN</option>
-  <option value="Airtel">Airtel</option>
-  <option value="Glo">Glo</option>
-  <option value="9mobile">9mobile</option>
+<option>MTN</option>
+<option>Airtel</option>
+<option>Glo</option>
+<option>9mobile</option>
 </select>
 
-<div class="admin-price">
-
-  <div>
-    <label>500MB (₦)</label>
-    <input type="number" id="p500" min="1">
-  </div>
-
-  <div>
-    <label>1GB (₦)</label>
-    <input type="number" id="p1" min="1">
-  </div>
-
-  <div>
-    <label>2GB (₦)</label>
-    <input type="number" id="p2" min="1">
-  </div>
-
-  <div>
-    <label>5GB (₦)</label>
-    <input type="number" id="p5" min="1">
-  </div>
-
+<div class="admin-grid">
+<div>
+<label>500MB (₦)</label>
+<input id="p500" type="number" min="1">
+</div>
+<div>
+<label>1GB (₦)</label>
+<input id="p1" type="number" min="1">
+</div>
+<div>
+<label>2GB (₦)</label>
+<input id="p2" type="number" min="1">
+</div>
+<div>
+<label>5GB (₦)</label>
+<input id="p5" type="number" min="1">
+</div>
 </div>
 
-<button type="button" onclick="savePrices()">
-  Save Prices
-</button>
+<label>Airtime Discount (%)</label>
+<input id="adminDiscount" type="number"
+min="0" max="100">
 
-<p id="adminMessage"
-style="margin-top:12px;font-size:13px;"></p>
+<button onclick="saveSettings()">Save Settings</button>
 
 <div class="notice">
-  Prototype only: these settings are not protected
-  by admin login. Do not use this frontend editor
-  for real customer transactions.
+This is a frontend demonstration, not a secure admin panel.
+Settings are saved only in this browser.
 </div>
-
 </section>
 
 </main>
 
 <footer>
-  <h3>AL-ILYAS VTU</h3>
-  <p>Your Trusted Data & Airtime Platform</p>
-  <p>© 2026 AL-ILYAS VTU. All Rights Reserved.</p>
+<h3>AL-ILYAS VTU</h3>
+<p>Fast, Reliable and Affordable Services.</p>
+<p>© 2026 AL-ILYAS VTU</p>
 </footer>
 
 <script>
 
-// SAMPLE PRICES - REPLACE WITH YOUR REAL PRICES
+// DEMO DATA PRICES
 
 const defaultPrices = {
-  MTN: {
-    "500MB": 150,
-    "1GB": 300,
-    "2GB": 600,
-    "5GB": 1500
-  },
-  Airtel: {
-    "500MB": 150,
-    "1GB": 300,
-    "2GB": 600,
-    "5GB": 1500
-  },
-  Glo: {
-    "500MB": 150,
-    "1GB": 300,
-    "2GB": 600,
-    "5GB": 1500
-  },
-  "9mobile": {
-    "500MB": 150,
-    "1GB": 300,
-    "2GB": 600,
-    "5GB": 1500
-  }
+MTN:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
+Airtel:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
+Glo:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
+"9mobile":{"500MB":150,"1GB":300,"2GB":600,"5GB":1500}
 };
 
-const STORAGE_KEY = "aliyas_vtu_demo_prices";
+let prices = JSON.parse(
+JSON.stringify(defaultPrices)
+);
 
-function loadPrices() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    const parsed = saved ? JSON.parse(saved) : null;
+let airtimeDiscount = 2;
 
-    if (parsed && typeof parsed === "object") {
-      for (const net of Object.keys(defaultPrices)) {
-        for (const size of Object.keys(defaultPrices[net])) {
-          const value = parsed[net]?.[size];
+function updateDataPlans() {
+const net = document.getElementById("dataNetwork").value;
+const plan = document.getElementById("dataPlan");
 
-          if (Number.isSafeInteger(value) && value > 0) {
-            defaultPrices[net][size] = value;
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.log("Using default demo prices.");
-  }
+plan.innerHTML = '<option value="">Select Data Plan</option>';
+
+if(!net) {
+document.getElementById("dataPrice").textContent="₦0";
+return;
 }
 
-loadPrices();
-
-const network = document.getElementById("network");
-const plan = document.getElementById("plan");
-const amount = document.getElementById("amount");
-const form = document.getElementById("dataForm");
-
-function updatePlans() {
-  const selected = network.value;
-
-  plan.innerHTML = '<option value="">Choose Data Plan</option>';
-  amount.value = "";
-
-  if (!selected) return;
-
-  Object.keys(defaultPrices[selected]).forEach(size => {
-    const option = document.createElement("option");
-    option.value = size;
-    option.textContent = size;
-    plan.appendChild(option);
-  });
-}
-
-function updatePrice() {
-  const net = network.value;
-  const size = plan.value;
-
-  if (net && size) {
-    amount.value =
-      "₦" + defaultPrices[net][size].toLocaleString("en-NG");
-  } else {
-    amount.value = "";
-  }
-}
-
-network.addEventListener("change", updatePlans);
-plan.addEventListener("change", updatePrice);
-
-// ADMIN PRICE EDITING
-
-const adminNetwork = document.getElementById("adminNetwork");
-
-function loadAdminPrices() {
-  const net = adminNetwork.value;
-  const p = defaultPrices[net];
-
-  document.getElementById("p500").value = p["500MB"];
-  document.getElementById("p1").value = p["1GB"];
-  document.getElementById("p2").value = p["2GB"];
-  document.getElementById("p5").value = p["5GB"];
-}
-
-adminNetwork.addEventListener("change", loadAdminPrices);
-
-function savePrices() {
-  const net = adminNetwork.value;
-
-  const values = {
-    "500MB": Number(document.getElementById("p500").value),
-    "1GB": Number(document.getElementById("p1").value),
-    "2GB": Number(document.getElementById("p2").value),
-    "5GB": Number(document.getElementById("p5").value)
-  };
-
-  if (!Object.values(values).every(
-    v => Number.isSafeInteger(v) && v > 0
-  )) {
-    alert("Enter valid prices greater than zero.");
-    return;
-  }
-
-  defaultPrices[net] = values;
-
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultPrices));
-  } catch (error) {
-    alert("Could not save prices in this browser.");
-    return;
-  }
-
-  loadAdminPrices();
-  updatePrice();
-
-  document.getElementById("adminMessage").textContent =
-    "Prices saved successfully for " + net + ".";
-}
-
-// CUSTOMER ORDER
-
-form.addEventListener("submit", function(event) {
-  event.preventDefault();
-
-  const net = network.value;
-  const size = plan.value;
-  const phone = document.getElementById("phone").value.trim();
-
-  if (!/^\d{11}$/.test(phone)) {
-    alert("Enter a valid 11-digit Nigerian phone number.");
-    return;
-  }
-
-  if (!net || !size) {
-    alert("Select your network and data plan.");
-    return;
-  }
-
-  const price = defaultPrices[net][size];
-  const order = "ALIYAS" + Date.now();
-
-  document.getElementById("orderID").textContent = order;
-  document.getElementById("showNetwork").textContent = net;
-  document.getElementById("showPhone").textContent = phone;
-  document.getElementById("showPlan").textContent = size;
-  document.getElementById("showAmount").textContent =
-    "₦" + price.toLocaleString("en-NG");
-
-  document.getElementById("summary").style.display = "block";
-
-  document.getElementById("summary").scrollIntoView({
-    behavior: "smooth"
-  });
+Object.keys(prices[net]).forEach(size=>{
+let option=document.createElement("option");
+option.value=size;
+option.textContent=size;
+plan.appendChild(option);
 });
 
-loadAdminPrices();
+updateDataPrice();
+}
+
+function updateDataPrice() {
+const net=document.getElementById("dataNetwork").value;
+const size=document.getElementById("dataPlan").value;
+
+document.getElementById("dataPrice").textContent =
+net && size ? "₦"+prices[net][size].toLocaleString("en-NG") : "₦0";
+}
+
+document.getElementById("dataNetwork")
+.addEventListener("change",updateDataPlans);
+
+document.getElementById("dataPlan")
+.addEventListener("change",updateDataPrice);
+
+// ORDER ID
+
+function generateOrderID() {
+return "ALIYAS"+Date.now();
+}
+
+function validPhone(phone) {
+return /^\d{11}$/.test(phone);
+}
+
+// DATA ORDER
+
+function buyData() {
+const net=document.getElementById("dataNetwork").value;
+const phone=document.getElementById("dataPhone").value.trim();
+const size=document.getElementById("dataPlan").value;
+
+if(!net || !size || !validPhone(phone)) {
+alert("Please enter a valid phone number and select network and plan.");
+return;
+}
+
+const price=prices[net][size];
+const id=generateOrderID();
+
+const summary=document.getElementById("dataSummary");
+
+summary.style.display="block";
+summary.textContent="";
+
+const title=document.createElement("h3");
+title.textContent="Data Order Summary";
+
+const details=[
+"Order ID: "+id,
+"Network: "+net,
+"Phone: "+phone,
+"Plan: "+size,
+"Amount: ₦"+price.toLocaleString("en-NG"),
+"DEMO ONLY: No payment or data delivery has occurred."
+];
+
+summary.appendChild(title);
+
+details.forEach(item=>{
+const p=document.createElement("p");
+p.textContent=item;
+summary.appendChild(p);
+});
+}
+
+// AIRTIME CALCULATOR
+
+function calculateAirtime() {
+const amount=Number(document.getElementById("airAmount").value);
+const discount=airtimeDiscount;
+
+if(!Number.isSafeInteger(amount) || amount<50 || amount>100000) {
+document.getElementById("discountValue").textContent="₦0";
+document.getElementById("payable").textContent="₦0";
+return;
+}
+
+const saving=amount*discount/100;
+const payable=amount-saving;
+
+document.getElementById("discountValue").textContent=
+"₦"+saving.toFixed(2);
+
+document.getElementById("payable").textContent=
+"₦"+payable.toFixed(2);
+}
+
+document.getElementById("airAmount")
+.addEventListener("input",calculateAirtime);
+
+// AIRTIME ORDER
+
+function buyAirtime() {
+const net=document.getElementById("airNetwork").value;
+const phone=document.getElementById("airPhone").value.trim();
+const amount=Number(document.getElementById("airAmount").value);
+
+if(!net || !validPhone(phone) ||
+!Number.isSafeInteger(amount) || amount<50 || amount>100000) {
+alert("Please enter valid airtime details.");
+return;
+}
+
+const saving=amount*airtimeDiscount/100;
+const payable=amount-saving;
+
+const summary=document.getElementById("airSummary");
+
+summary.style.display="block";
+summary.textContent="";
+
+const title=document.createElement("h3");
+title.textContent="Airtime Order Summary";
+summary.appendChild(title);
+
+[
+"Order ID: "+generateOrderID(),
+"Network: "+net,
+"Phone: "+phone,
+"Airtime Value: ₦"+amount.toLocaleString("en-NG"),
+"Discount: "+airtimeDiscount+"%",
+"Discount Value: ₦"+saving.toFixed(2),
+"Customer Pays: ₦"+payable.toFixed(2),
+"DEMO ONLY: No payment or airtime delivery has occurred."
+].forEach(item=>{
+const p=document.createElement("p");
+p.textContent=item;
+summary.appendChild(p);
+});
+}
+
+// ADMIN SETTINGS
+
+const adminNetwork=document.getElementById("adminNetwork");
+
+function loadAdminSettings() {
+const p=prices[adminNetwork.value];
+
+document.getElementById("p500").value=p["500MB"];
+document.getElementById("p1").value=p["1GB"];
+document.getElementById("p2").value=p["2GB"];
+document.getElementById("p5").value=p["5GB"];
+document.getElementById("adminDiscount").value=airtimeDiscount;
+}
+
+adminNetwork.addEventListener("change",loadAdminSettings);
+
+function saveSettings() {
+const values={
+"500MB":Number(document.getElementById("p500").value),
+"1GB":Number(document.getElementById("p1").value),
+"2GB":Number(document.getElementById("p2").value),
+"5GB":Number(document.getElementById("p5").value)
+};
+
+const discount=Number(document.getElementById("adminDiscount").value);
+
+if(!Object.values(values).every(v=>
+Number.isSafeInteger(v) && v>0)) {
+alert("Enter valid data prices.");
+return;
+}
+
+if(!Number.isFinite(discount) || discount<0 || discount>100) {
+alert("Enter a valid discount between 0 and 100.");
+return;
+}
+
+prices[adminNetwork.value]=values;
+airtimeDiscount=discount;
+
+try {
+localStorage.setItem("aliyas_vtu_prices",JSON.stringify(prices));
+localStorage.setItem("aliyas_vtu_discount",String(discount));
+} catch(error) {
+alert("Could not save settings.");
+return;
+}
+
+updateDataPrice();
+calculateAirtime();
+
+alert("Settings saved successfully!");
+}
+
+function restoreSettings() {
+try {
+const saved=localStorage.getItem("aliyas_vtu_prices");
+const savedDiscount=localStorage.getItem("aliyas_vtu_discount");
+
+if(saved) {
+const parsed=JSON.parse(saved);
+
+for(const net of Object.keys(defaultPrices)) {
+for(const size of Object.keys(defaultPrices[net])) {
+const value=parsed?.[net]?.[size];
+if(Number.isSafeInteger(value) && value>0) {
+prices[net][size]=value;
+}
+}
+}
+}
+
+if(savedDiscount!==null) {
+const d=Number(savedDiscount);
+if(Number.isFinite(d) && d>=0 && d<=100) {
+airtimeDiscount=d;
+}
+}
+} catch(error) {
+console.log("Using default demo settings.");
+}
+}
+
+restoreSettings();
+loadAdminSettings();
 
 </script>
 

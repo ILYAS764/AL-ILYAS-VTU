@@ -18,6 +18,7 @@ label{display:block;margin:14px 0 7px;font-weight:bold;font-size:14px}
 input,select{width:100%;padding:13px;border:1px solid #ddd;border-radius:7px;font-size:15px;background:white}
 button{width:100%;padding:14px;margin-top:18px;border:none;border-radius:7px;background:#087c45;color:white;font-size:16px;font-weight:bold;cursor:pointer}
 button:hover{background:#056536}
+button:disabled{opacity:.6;cursor:not-allowed}
 .secondary{background:#555}
 .summary{display:none;background:#e9f8ef;padding:16px;border-radius:9px;margin-top:18px;line-height:2;overflow-wrap:anywhere}
 .notice{background:#fff5df;padding:12px;border-radius:7px;margin-top:13px;font-size:13px;line-height:1.6}
@@ -29,40 +30,42 @@ footer{background:#073d27;color:white;text-align:center;padding:25px}
 /* WALLET DESIGN */
 .wallet-box{
  background:linear-gradient(135deg,#087c45,#13ad68);
- color:white;
- padding:22px;
- border-radius:12px;
- margin-top:22px;
+ color:white;padding:22px;border-radius:12px;margin-top:22px;
 }
 .wallet-box h3{margin-bottom:15px}
-.wallet-box h2{
- color:white;
- font-size:30px;
- margin:8px 0;
-}
+.wallet-box h2{color:white;font-size:30px;margin:8px 0}
 .wallet-box p{font-size:14px}
-.wallet-note{
- font-size:12px!important;
- margin-top:12px;
- opacity:.9;
-}
+.wallet-note{font-size:12px!important;margin-top:12px;opacity:.9}
 .transaction-item{
- border:1px solid #e5e7eb;
- border-radius:8px;
- padding:13px;
- margin-top:10px;
- line-height:1.7;
- overflow-wrap:anywhere;
+ border:1px solid #e5e7eb;border-radius:8px;
+ padding:13px;margin-top:10px;line-height:1.7;overflow-wrap:anywhere;
 }
 .transaction-item p{font-size:13px}
 .transaction-status{font-weight:bold}
 .empty-transactions{
- background:#f3f7f5;
- padding:15px;
- border-radius:8px;
- margin-top:12px;
- font-size:14px;
+ background:#f3f7f5;padding:15px;border-radius:8px;
+ margin-top:12px;font-size:14px;line-height:1.6;
 }
+
+/* FUND WALLET DESIGN */
+.bank-details{
+ background:#e9f8ef;padding:15px;border-radius:9px;
+ margin-top:14px;line-height:1.9;overflow-wrap:anywhere;
+ display:none;
+}
+.bank-details strong{color:#087c45}
+.funding-note{
+ background:#fff5df;padding:13px;border-radius:8px;
+ margin-top:14px;font-size:13px;line-height:1.7;
+}
+.funding-item{
+ border:1px solid #e5e7eb;border-radius:8px;
+ padding:13px;margin-top:10px;line-height:1.8;overflow-wrap:anywhere;
+}
+.funding-item p{font-size:13px}
+.status-pending{color:#a66b00;font-weight:bold}
+.status-approved{color:#087c45;font-weight:bold}
+.status-rejected{color:#c62828;font-weight:bold}
 </style>
 </head>
 
@@ -81,7 +84,6 @@ footer{background:#073d27;color:white;text-align:center;padding:25px}
 <main class="container">
 
 <!-- CUSTOMER AUTHENTICATION -->
-
 <section class="card" id="authCard">
 <h2>👤 Customer Account</h2>
 
@@ -99,8 +101,7 @@ inputmode="numeric" placeholder="08012345678">
 <input id="regEmail" type="email" placeholder="Enter your email">
 
 <label>Password</label>
-<input id="regPassword" type="password"
-placeholder="Create a password">
+<input id="regPassword" type="password" placeholder="Create a password">
 
 <button onclick="registerCustomer()">Create Account</button>
 
@@ -127,7 +128,6 @@ Already have an account?
 </section>
 
 <!-- CUSTOMER DASHBOARD -->
-
 <section class="card" id="dashboard">
 <h2>My Dashboard</h2>
 
@@ -136,20 +136,69 @@ Already have an account?
 <p style="margin-top:10px"><b>Phone:</b> <span id="profilePhone"></span></p>
 
 <!-- CUSTOMER WALLET -->
-
 <div class="wallet-box">
 <h3>💰 My Wallet</h3>
 <p>Available Balance</p>
 <h2 id="walletBalance">₦0.00</h2>
-<p id="walletMessage" class="wallet-note">
-Loading wallet...
+<p id="walletMessage" class="wallet-note">Loading wallet...</p>
+</div>
+
+<!-- FUND WALLET -->
+<div style="margin-top:25px">
+<h3 style="color:#087c45">💳 Fund My Wallet</h3>
+
+<p style="font-size:13px;line-height:1.6;margin-top:8px">
+Transfer money to one of the accounts below, then submit your transaction details.
+</p>
+
+<label>Amount (₦)</label>
+<input id="fundAmount" type="number" min="100" max="1000000"
+step="1" placeholder="Enter amount (minimum ₦100)">
+
+<label>Select Bank</label>
+<select id="fundBank">
+<option value="">Select payment bank</option>
+<option value="OPay">OPay</option>
+<option value="Moniepoint">Moniepoint</option>
+</select>
+
+<div class="bank-details" id="bankDetails">
+<p><strong>Bank:</strong> <span id="bankName"></span></p>
+<p><strong>Account Name:</strong> ILIYASU MUHAMMAD</p>
+<p><strong>Account Number:</strong> <span id="bankAccount"></span></p>
+<p style="font-size:12px;margin-top:8px">
+Please confirm the account name and number before making your transfer.
 </p>
 </div>
 
-<!-- TRANSACTION HISTORY -->
+<label>Transaction Reference</label>
+<input id="fundReference" type="text" maxlength="100"
+placeholder="Enter your bank transfer reference">
 
+<div class="funding-note">
+<strong>Important:</strong> Transfer first, then submit your transaction reference.
+Your request will remain pending until the payment is verified by the administrator.
+Entering a reference does not automatically add money to your wallet.
+</div>
+
+<button id="fundButton" onclick="submitFundingRequest()">
+Submit Funding Request
+</button>
+
+<p id="fundMessage" class="message" aria-live="polite"></p>
+</div>
+
+<!-- FUNDING HISTORY -->
 <div style="margin-top:25px">
-<h3 style="color:#087c45">📋 Recent Transactions</h3>
+<h3 style="color:#087c45">📑 My Funding History</h3>
+<div id="fundingHistory">
+<p class="empty-transactions">Loading funding history...</p>
+</div>
+</div>
+
+<!-- WALLET TRANSACTION HISTORY -->
+<div style="margin-top:25px">
+<h3 style="color:#087c45">📋 Recent Wallet Transactions</h3>
 <div id="walletTransactions">
 <p class="empty-transactions">Loading transactions...</p>
 </div>
@@ -159,7 +208,6 @@ Loading wallet...
 </section>
 
 <!-- DATA PURCHASE -->
-
 <section class="card">
 <h2>📶 Buy Data</h2>
 
@@ -190,7 +238,6 @@ Price: <span id="dataPrice">₦0</span>
 </section>
 
 <!-- AIRTIME PURCHASE -->
-
 <section class="card">
 <h2>📱 Buy Airtime</h2>
 
@@ -224,7 +271,6 @@ placeholder="Enter amount">
 </section>
 
 <!-- ADMIN DEMO SETTINGS -->
-
 <section class="card">
 <h2>⚙️ Admin Price Settings</h2>
 
@@ -279,7 +325,6 @@ Anyone visiting this website can access these settings.
 </footer>
 
 <!-- DATA AND AIRTIME FUNCTIONS -->
-
 <script>
 const defaultPrices = {
  MTN:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
@@ -507,25 +552,46 @@ restoreSettings();
 loadAdminSettings();
 </script>
 
-<!-- SUPABASE AUTHENTICATION AND WALLET -->
-
+<!-- SUPABASE AUTHENTICATION, WALLET AND FUNDING -->
 <script type="module">
 import { createClient } from
 "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-/* PUT YOUR REAL SUPABASE DETAILS HERE */
+/* SUPABASE PROJECT DETAILS */
 const SUPABASE_URL = "https://bfmsbdgjdaiqmypcuxce.supabase.co";
-const SUPABASE_KEY = "sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
+
+/* Replace this placeholder with your existing Supabase PUBLISHABLE KEY */
+const SUPABASE_KEY ="sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
 
 const supabase = createClient(SUPABASE_URL,SUPABASE_KEY);
 
 window.currentUser=null;
 
 const authMessage=document.getElementById("authMessage");
+const fundMessage=document.getElementById("fundMessage");
+
+/* BANK ACCOUNT DETAILS */
+const bankAccounts={
+ OPay:{
+  name:"OPay",
+  account:"6458790287",
+  accountName:"ILIYASU MUHAMMAD"
+ },
+ Moniepoint:{
+  name:"Moniepoint",
+  account:"8136438501",
+  accountName:"ILIYASU MUHAMMAD"
+ }
+};
 
 function showMessage(message,color="#087c45"){
  authMessage.textContent=message;
  authMessage.style.color=color;
+}
+
+function showFundMessage(message,color="#087c45"){
+ fundMessage.textContent=message;
+ fundMessage.style.color=color;
 }
 
 function formatNaira(amount){
@@ -538,6 +604,7 @@ function formatNaira(amount){
  });
 }
 
+/* SWITCH AUTH FORMS */
 window.showLogin=function(){
  document.getElementById("registerForm").style.display="none";
  document.getElementById("loginForm").style.display="block";
@@ -550,8 +617,22 @@ window.showRegister=function(){
  showMessage("");
 };
 
-/* CREATE OR UPDATE CUSTOMER PROFILE */
+/* SHOW SELECTED BANK ACCOUNT */
+document.getElementById("fundBank").addEventListener("change",function(){
+ const bank=this.value;
+ const details=document.getElementById("bankDetails");
 
+ if(!bank||!bankAccounts[bank]){
+  details.style.display="none";
+  return;
+ }
+
+ document.getElementById("bankName").textContent=bankAccounts[bank].name;
+ document.getElementById("bankAccount").textContent=bankAccounts[bank].account;
+ details.style.display="block";
+});
+
+/* CREATE OR UPDATE CUSTOMER PROFILE */
 async function createOrUpdateProfile(user){
  if(!user) return null;
 
@@ -576,7 +657,6 @@ async function createOrUpdateProfile(user){
 }
 
 /* LOAD WALLET BALANCE */
-
 async function loadWallet(user){
  const balanceElement=document.getElementById("walletBalance");
  const messageElement=document.getElementById("walletMessage");
@@ -607,11 +687,9 @@ async function loadWallet(user){
  messageElement.textContent="Your wallet balance";
 }
 
-/* LOAD CUSTOMER TRANSACTIONS */
-
+/* LOAD WALLET TRANSACTIONS */
 async function loadTransactions(user){
  const container=document.getElementById("walletTransactions");
-
  container.textContent="";
 
  const loading=document.createElement("p");
@@ -646,37 +724,183 @@ async function loadTransactions(user){
   const item=document.createElement("div");
   item.className="transaction-item";
 
-  const type=document.createElement("p");
-  type.textContent="Type: "+(transaction.type||"Transaction");
+  const fields=[
+   ["Type: ",transaction.type||"Transaction"],
+   ["Amount: ",formatNaira(transaction.amount)],
+   ["Status: ",transaction.status||"Unknown"],
+   ["Reference: ",transaction.reference||"Not available"],
+   ["Description: ",transaction.description||"No description"]
+  ];
 
-  const amount=document.createElement("p");
-  amount.textContent="Amount: "+formatNaira(transaction.amount);
-
-  const status=document.createElement("p");
-  status.className="transaction-status";
-  status.textContent="Status: "+(transaction.status||"Unknown");
-
-  const reference=document.createElement("p");
-  reference.textContent="Reference: "+(transaction.reference||"Not available");
-
-  const description=document.createElement("p");
-  description.textContent="Description: "+(transaction.description||"No description");
+  fields.forEach(([label,value])=>{
+   const p=document.createElement("p");
+   p.textContent=label+value;
+   item.appendChild(p);
+  });
 
   const date=document.createElement("p");
   const parsedDate=new Date(transaction.created_at);
-
   date.textContent="Date: "+
    (Number.isNaN(parsedDate.getTime())
     ?"Not available"
     :parsedDate.toLocaleString("en-NG"));
 
-  item.append(type,amount,status,reference,description,date);
+  item.appendChild(date);
+  container.appendChild(item);
+ });
+}
+
+/* SUBMIT CUSTOMER FUNDING REQUEST */
+window.submitFundingRequest=async function(){
+ const user=window.currentUser;
+
+ if(!user){
+  showFundMessage("Please login before submitting a funding request.","red");
+  return;
+ }
+
+ const amount=Number(document.getElementById("fundAmount").value);
+ const bank=document.getElementById("fundBank").value;
+ const reference=document.getElementById("fundReference").value.trim();
+
+ if(!Number.isSafeInteger(amount)||amount<100||amount>1000000){
+  showFundMessage("Enter a whole-number amount between ₦100 and ₦1,000,000.","red");
+  return;
+ }
+
+ if(!bankAccounts[bank]){
+  showFundMessage("Please select OPay or Moniepoint.","red");
+  return;
+ }
+
+ if(reference.length<3||reference.length>100){
+  showFundMessage("Enter a valid transaction reference (3 to 100 characters).","red");
+  return;
+ }
+
+ const button=document.getElementById("fundButton");
+ button.disabled=true;
+ button.textContent="Submitting...";
+ showFundMessage("Submitting your funding request...");
+
+ try{
+  const {error}=await supabase
+   .from("wallet_funding_requests")
+   .insert({
+    user_id:user.id,
+    amount:amount,
+    bank:bank,
+    reference:reference
+   });
+
+  if(error){
+   console.error("Funding request error:",error);
+
+   if(error.code==="23505"){
+    showFundMessage("This transaction reference has already been submitted. Please check it and try again.","red");
+   }else{
+    showFundMessage("Could not submit your request: "+error.message,"red");
+   }
+   return;
+  }
+
+  document.getElementById("fundAmount").value="";
+  document.getElementById("fundBank").value="";
+  document.getElementById("fundReference").value="";
+  document.getElementById("bankDetails").style.display="none";
+
+  showFundMessage("Your funding request was submitted successfully. It is now pending payment verification.");
+
+  await loadFundingRequests(user);
+
+ }catch(error){
+  console.error("Funding submission error:",error);
+  showFundMessage("Something went wrong. Please try again.","red");
+ }finally{
+  button.disabled=false;
+  button.textContent="Submit Funding Request";
+ }
+};
+
+/* LOAD CUSTOMER FUNDING HISTORY */
+async function loadFundingRequests(user){
+ const container=document.getElementById("fundingHistory");
+ container.textContent="";
+
+ const loading=document.createElement("p");
+ loading.className="empty-transactions";
+ loading.textContent="Loading funding history...";
+ container.appendChild(loading);
+
+ const {data:requests,error}=await supabase
+  .from("wallet_funding_requests")
+  .select("amount,bank,reference,status,created_at,admin_note")
+  .eq("user_id",user.id)
+  .order("created_at",{ascending:false})
+  .limit(20);
+
+ if(error){
+  console.error("Funding history error:",error.message);
+  container.textContent="Unable to load funding history. Please refresh the page.";
+  return;
+ }
+
+ container.textContent="";
+
+ if(!requests||requests.length===0){
+  const empty=document.createElement("p");
+  empty.className="empty-transactions";
+  empty.textContent="No funding requests yet. Your requests will appear here.";
+  container.appendChild(empty);
+  return;
+ }
+
+ requests.forEach(request=>{
+  const item=document.createElement("div");
+  item.className="funding-item";
+
+  const amount=document.createElement("p");
+  amount.textContent="Amount: "+formatNaira(request.amount);
+
+  const bank=document.createElement("p");
+  bank.textContent="Bank: "+request.bank;
+
+  const reference=document.createElement("p");
+  reference.textContent="Reference: "+request.reference;
+
+  const status=document.createElement("p");
+  status.textContent="Status: "+request.status;
+
+  const normalizedStatus=String(request.status||"").toLowerCase();
+
+  if(normalizedStatus==="approved"){
+   status.className="status-approved";
+  }else if(normalizedStatus==="rejected"){
+   status.className="status-rejected";
+  }else{
+   status.className="status-pending";
+  }
+
+  const date=document.createElement("p");
+  const parsedDate=new Date(request.created_at);
+  date.textContent="Date: "+
+   (Number.isNaN(parsedDate.getTime())
+    ?"Not available"
+    :parsedDate.toLocaleString("en-NG"));
+
+  item.append(amount,bank,reference,status,date);
+
+  if(request.admin_note){
+   const note=document.createElement("p");
+   note.textContent="Admin Note: "+request.admin_note;
+   item.appendChild(note);
+  }
+
   container.appendChild(item);
  });
 }
 
 /* DISPLAY CUSTOMER DASHBOARD */
-
 let displayedUserId=null;
 
 async function displayUser(user){
@@ -702,8 +926,6 @@ async function displayUser(user){
  document.getElementById("profilePhone").textContent=
   user.user_metadata?.phone||"Not provided";
 
- /* Prevent duplicate loading for the same user */
-
  if(displayedUserId===user.id) return;
  displayedUserId=user.id;
 
@@ -712,8 +934,6 @@ async function displayUser(user){
  if(profileError){
   console.error("Could not update profile:",profileError.message);
  }
-
- /* Get profile information */
 
  const {data:profile,error:profileFetchError}=await supabase
   .from("profiles")
@@ -733,16 +953,14 @@ async function displayUser(user){
    profile.phone||"Not provided";
  }
 
- /* Load wallet and transaction history */
-
  await Promise.all([
   loadWallet(user),
-  loadTransactions(user)
+  loadTransactions(user),
+  loadFundingRequests(user)
  ]);
 }
 
 /* CUSTOMER REGISTRATION */
-
 window.registerCustomer=async function(){
  const name=document.getElementById("regName").value.trim();
  const phone=document.getElementById("regPhone").value.trim();
@@ -791,7 +1009,6 @@ window.registerCustomer=async function(){
 };
 
 /* CUSTOMER LOGIN */
-
 window.loginCustomer=async function(){
  const email=document.getElementById("loginEmail").value.trim();
  const password=document.getElementById("loginPassword").value;
@@ -818,7 +1035,6 @@ window.loginCustomer=async function(){
 };
 
 /* CUSTOMER LOGOUT */
-
 window.logoutCustomer=async function(){
  const {error}=await supabase.auth.signOut();
 
@@ -836,13 +1052,18 @@ window.logoutCustomer=async function(){
  document.getElementById("walletBalance").textContent="₦0.00";
  document.getElementById("walletMessage").textContent="Please login to view your wallet.";
  document.getElementById("walletTransactions").textContent="";
+ document.getElementById("fundingHistory").textContent="";
+ document.getElementById("fundMessage").textContent="";
+ document.getElementById("fundAmount").value="";
+ document.getElementById("fundBank").value="";
+ document.getElementById("fundReference").value="";
+ document.getElementById("bankDetails").style.display="none";
 
  window.showLogin();
  showMessage("You have logged out successfully.");
 };
 
 /* CHECK EXISTING LOGIN SESSION */
-
 supabase.auth.onAuthStateChange((event,session)=>{
  if(event==="SIGNED_IN"&&session?.user){
   displayUser(session.user);

@@ -11,61 +11,45 @@
 body{background:#f3f7f5;color:#183328}
 header{background:#087c45;color:white;padding:20px;text-align:center}
 .hero{background:linear-gradient(135deg,#087c45,#13ad68);color:white;text-align:center;padding:35px 15px}
-.container{max-width:600px;margin:25px auto;padding:15px}
+.container{max-width:650px;margin:25px auto;padding:15px}
 .card{background:white;padding:22px;border-radius:13px;margin-bottom:20px;box-shadow:0 3px 12px #0001}
 h2{color:#087c45;margin-bottom:17px}
 label{display:block;margin:14px 0 7px;font-weight:bold;font-size:14px}
-input,select{width:100%;padding:13px;border:1px solid #ddd;border-radius:7px;font-size:15px;background:white}
-button{width:100%;padding:14px;margin-top:18px;border:none;border-radius:7px;background:#087c45;color:white;font-size:16px;font-weight:bold;cursor:pointer}
+input,select,textarea{width:100%;padding:13px;border:1px solid #ddd;border-radius:7px;font-size:15px;background:white}
+textarea{min-height:65px;resize:vertical}
+button{padding:13px 15px;margin-top:12px;border:none;border-radius:7px;background:#087c45;color:white;font-size:14px;font-weight:bold;cursor:pointer}
 button:hover{background:#056536}
 button:disabled{opacity:.6;cursor:not-allowed}
 .secondary{background:#555}
+.danger{background:#bd2929}
+.admin-button{width:auto;margin-right:6px}
+.full-button{width:100%}
 .summary{display:none;background:#e9f8ef;padding:16px;border-radius:9px;margin-top:18px;line-height:2;overflow-wrap:anywhere}
 .notice{background:#fff5df;padding:12px;border-radius:7px;margin-top:13px;font-size:13px;line-height:1.6}
 .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 footer{background:#073d27;color:white;text-align:center;padding:25px}
-#dashboard{display:none}
+#dashboard,#adminPanel{display:none}
 .message{font-size:14px;line-height:1.6;margin-top:12px;overflow-wrap:anywhere}
-
-/* WALLET DESIGN */
-.wallet-box{
- background:linear-gradient(135deg,#087c45,#13ad68);
- color:white;padding:22px;border-radius:12px;margin-top:22px;
-}
+.wallet-box{background:linear-gradient(135deg,#087c45,#13ad68);color:white;padding:22px;border-radius:12px;margin-top:22px}
 .wallet-box h3{margin-bottom:15px}
 .wallet-box h2{color:white;font-size:30px;margin:8px 0}
 .wallet-box p{font-size:14px}
 .wallet-note{font-size:12px!important;margin-top:12px;opacity:.9}
-.transaction-item{
- border:1px solid #e5e7eb;border-radius:8px;
- padding:13px;margin-top:10px;line-height:1.7;overflow-wrap:anywhere;
-}
-.transaction-item p{font-size:13px}
-.transaction-status{font-weight:bold}
-.empty-transactions{
- background:#f3f7f5;padding:15px;border-radius:8px;
- margin-top:12px;font-size:14px;line-height:1.6;
-}
-
-/* FUND WALLET DESIGN */
-.bank-details{
- background:#e9f8ef;padding:15px;border-radius:9px;
- margin-top:14px;line-height:1.9;overflow-wrap:anywhere;
- display:none;
-}
+.transaction-item,.funding-item,.admin-request{border:1px solid #e5e7eb;border-radius:8px;padding:13px;margin-top:10px;line-height:1.8;overflow-wrap:anywhere}
+.transaction-item p,.funding-item p,.admin-request p{font-size:13px}
+.empty-transactions{background:#f3f7f5;padding:15px;border-radius:8px;margin-top:12px;font-size:14px;line-height:1.6}
+.bank-details{background:#e9f8ef;padding:15px;border-radius:9px;margin-top:14px;line-height:1.9;overflow-wrap:anywhere;display:none}
 .bank-details strong{color:#087c45}
-.funding-note{
- background:#fff5df;padding:13px;border-radius:8px;
- margin-top:14px;font-size:13px;line-height:1.7;
-}
-.funding-item{
- border:1px solid #e5e7eb;border-radius:8px;
- padding:13px;margin-top:10px;line-height:1.8;overflow-wrap:anywhere;
-}
-.funding-item p{font-size:13px}
+.funding-note{background:#fff5df;padding:13px;border-radius:8px;margin-top:14px;font-size:13px;line-height:1.7}
 .status-pending{color:#a66b00;font-weight:bold}
 .status-approved{color:#087c45;font-weight:bold}
 .status-rejected{color:#c62828;font-weight:bold}
+.admin-heading{background:#e9f8ef;padding:15px;border-radius:9px;margin-bottom:15px;line-height:1.7}
+.admin-request h4{color:#087c45;margin-bottom:8px}
+.admin-actions{display:flex;gap:8px;flex-wrap:wrap}
+.admin-actions button{flex:1;min-width:100px}
+.admin-label{display:inline-block;background:#087c45;color:white;padding:5px 10px;border-radius:20px;font-size:12px;margin-bottom:12px}
+hr{border:0;border-top:1px solid #eee;margin:18px 0}
 </style>
 </head>
 
@@ -94,8 +78,7 @@ footer{background:#073d27;color:white;text-align:center;padding:25px}
 <input id="regName" type="text" placeholder="Enter your full name">
 
 <label>Phone Number</label>
-<input id="regPhone" type="tel" maxlength="11"
-inputmode="numeric" placeholder="08012345678">
+<input id="regPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="08012345678">
 
 <label>Email Address</label>
 <input id="regEmail" type="email" placeholder="Enter your email">
@@ -103,12 +86,10 @@ inputmode="numeric" placeholder="08012345678">
 <label>Password</label>
 <input id="regPassword" type="password" placeholder="Create a password">
 
-<button onclick="registerCustomer()">Create Account</button>
+<button class="full-button" onclick="registerCustomer()">Create Account</button>
 
-<p style="margin-top:15px;text-align:center">
-Already have an account?
-</p>
-<button class="secondary" onclick="showLogin()">Login</button>
+<p style="margin-top:15px;text-align:center">Already have an account?</p>
+<button class="secondary full-button" onclick="showLogin()">Login</button>
 </div>
 
 <div id="loginForm" style="display:none">
@@ -120,8 +101,8 @@ Already have an account?
 <label>Password</label>
 <input id="loginPassword" type="password" placeholder="Enter your password">
 
-<button onclick="loginCustomer()">Login</button>
-<button class="secondary" onclick="showRegister()">Create New Account</button>
+<button class="full-button" onclick="loginCustomer()">Login</button>
+<button class="secondary full-button" onclick="showRegister()">Create New Account</button>
 </div>
 
 <p class="message" id="authMessage" aria-live="polite"></p>
@@ -134,6 +115,32 @@ Already have an account?
 <p><b>Name:</b> <span id="profileName"></span></p>
 <p style="margin-top:10px"><b>Email:</b> <span id="profileEmail"></span></p>
 <p style="margin-top:10px"><b>Phone:</b> <span id="profilePhone"></span></p>
+
+<!-- ADMIN PANEL: ONLY VISIBLE TO ADMIN -->
+<section id="adminPanel" style="margin-top:25px">
+<div class="admin-heading">
+<span class="admin-label">ADMIN ACCESS</span>
+<h2 style="margin-bottom:8px">⚙️ Admin Dashboard</h2>
+<p>Manage customer wallet funding requests.</p>
+<p><b>Admin:</b> <span id="adminEmail"></span></p>
+</div>
+
+<h3 style="color:#087c45">📥 Customer Funding Requests</h3>
+
+<div class="notice">
+<strong>Important:</strong> Check your OPay or Moniepoint account and confirm that the transfer has actually arrived before approving a request. A submitted reference alone is not proof of payment.
+</div>
+
+<button class="full-button" id="refreshAdminButton" onclick="loadAdminFundingRequests()">
+Refresh Funding Requests
+</button>
+
+<p id="adminMessage" class="message" aria-live="polite"></p>
+
+<div id="adminFundingList">
+<p class="empty-transactions">Loading admin requests...</p>
+</div>
+</section>
 
 <!-- CUSTOMER WALLET -->
 <div class="wallet-box">
@@ -152,8 +159,7 @@ Transfer money to one of the accounts below, then submit your transaction detail
 </p>
 
 <label>Amount (₦)</label>
-<input id="fundAmount" type="number" min="100" max="1000000"
-step="1" placeholder="Enter amount (minimum ₦100)">
+<input id="fundAmount" type="number" min="100" max="1000000" step="1" placeholder="Enter amount (minimum ₦100)">
 
 <label>Select Bank</label>
 <select id="fundBank">
@@ -166,25 +172,17 @@ step="1" placeholder="Enter amount (minimum ₦100)">
 <p><strong>Bank:</strong> <span id="bankName"></span></p>
 <p><strong>Account Name:</strong> ILIYASU MUHAMMAD</p>
 <p><strong>Account Number:</strong> <span id="bankAccount"></span></p>
-<p style="font-size:12px;margin-top:8px">
-Please confirm the account name and number before making your transfer.
-</p>
+<p style="font-size:12px;margin-top:8px">Please confirm the account name and number before making your transfer.</p>
 </div>
 
 <label>Transaction Reference</label>
-<input id="fundReference" type="text" maxlength="100"
-placeholder="Enter your bank transfer reference">
+<input id="fundReference" type="text" maxlength="100" placeholder="Enter your bank transfer reference">
 
 <div class="funding-note">
-<strong>Important:</strong> Transfer first, then submit your transaction reference.
-Your request will remain pending until the payment is verified by the administrator.
-Entering a reference does not automatically add money to your wallet.
+<strong>Important:</strong> Transfer first, then submit your transaction reference. Your request remains pending until the administrator verifies the payment. Entering a reference does not automatically add money to your wallet.
 </div>
 
-<button id="fundButton" onclick="submitFundingRequest()">
-Submit Funding Request
-</button>
-
+<button class="full-button" id="fundButton" onclick="submitFundingRequest()">Submit Funding Request</button>
 <p id="fundMessage" class="message" aria-live="polite"></p>
 </div>
 
@@ -204,7 +202,7 @@ Submit Funding Request
 </div>
 </div>
 
-<button class="secondary" onclick="logoutCustomer()">Logout</button>
+<button class="secondary full-button" onclick="logoutCustomer()">Logout</button>
 </section>
 
 <!-- DATA PURCHASE -->
@@ -221,19 +219,16 @@ Submit Funding Request
 </select>
 
 <label>Phone Number</label>
-<input id="dataPhone" type="tel" maxlength="11"
-inputmode="numeric" placeholder="Enter phone number">
+<input id="dataPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="Enter phone number">
 
 <label>Data Plan</label>
 <select id="dataPlan">
 <option value="">Select Data Plan</option>
 </select>
 
-<p style="margin-top:12px;font-weight:bold">
-Price: <span id="dataPrice">₦0</span>
-</p>
+<p style="margin-top:12px;font-weight:bold">Price: <span id="dataPrice">₦0</span></p>
 
-<button onclick="buyData()">Continue Data Order</button>
+<button class="full-button" onclick="buyData()">Continue Data Order</button>
 <div class="summary" id="dataSummary"></div>
 </section>
 
@@ -251,12 +246,10 @@ Price: <span id="dataPrice">₦0</span>
 </select>
 
 <label>Phone Number</label>
-<input id="airPhone" type="tel" maxlength="11"
-inputmode="numeric" placeholder="Enter phone number">
+<input id="airPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="Enter phone number">
 
 <label>Airtime Amount (₦)</label>
-<input id="airAmount" type="number" min="50" max="100000"
-placeholder="Enter amount">
+<input id="airAmount" type="number" min="50" max="100000" placeholder="Enter amount">
 
 <label>Discount (%)</label>
 <input id="discount" type="number" min="0" max="100" value="2">
@@ -266,7 +259,7 @@ placeholder="Enter amount">
 <p>Customer Pays: <b id="payable">₦0</b></p>
 </div>
 
-<button onclick="buyAirtime()">Continue Airtime Order</button>
+<button class="full-button" onclick="buyAirtime()">Continue Airtime Order</button>
 <div class="summary" id="airSummary"></div>
 </section>
 
@@ -308,11 +301,10 @@ Demo settings for editing data prices and airtime discount.
 <label>Airtime Discount (%)</label>
 <input id="adminDiscount" type="number" min="0" max="100">
 
-<button onclick="saveSettings()">Save Settings</button>
+<button class="full-button" onclick="saveSettings()">Save Settings</button>
 
 <div class="notice">
-This is a frontend demonstration, not a secure admin panel.
-Anyone visiting this website can access these settings.
+These price settings are still a frontend demonstration, not a secure admin system. Anyone visiting the website can access them. Do not use them to control real VTU prices yet.
 </div>
 </section>
 
@@ -552,16 +544,17 @@ restoreSettings();
 loadAdminSettings();
 </script>
 
-<!-- SUPABASE AUTHENTICATION, WALLET AND FUNDING -->
+<!-- SUPABASE AUTHENTICATION, WALLET, FUNDING AND ADMIN -->
 <script type="module">
 import { createClient } from
 "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-/* SUPABASE PROJECT DETAILS */
-const SUPABASE_URL = "https://bfmsbdgjdaiqmypcuxce.supabase.co";
-
-/* Replace this placeholder with your existing Supabase PUBLISHABLE KEY */
-const SUPABASE_KEY ="sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
+/* SUPABASE PROJECT DETAILS
+   Keep your existing real Project URL and Publishable Key here.
+   NEVER put a Secret or service_role key in this file.
+*/
+ const SUPABASE_URL = "https://bfmsbdgjdaiqmypcuxce.supabase.co";
+const SUPABASE_KEY = "sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
 
 const supabase = createClient(SUPABASE_URL,SUPABASE_KEY);
 
@@ -569,6 +562,10 @@ window.currentUser=null;
 
 const authMessage=document.getElementById("authMessage");
 const fundMessage=document.getElementById("fundMessage");
+const adminMessage=document.getElementById("adminMessage");
+
+let displayedUserId=null;
+let currentUserIsAdmin=false;
 
 /* BANK ACCOUNT DETAILS */
 const bankAccounts={
@@ -594,6 +591,11 @@ function showFundMessage(message,color="#087c45"){
  fundMessage.style.color=color;
 }
 
+function showAdminMessage(message,color="#087c45"){
+ adminMessage.textContent=message;
+ adminMessage.style.color=color;
+}
+
 function formatNaira(amount){
  const value=Number(amount);
  if(!Number.isFinite(value)) return "₦0.00";
@@ -602,6 +604,13 @@ function formatNaira(amount){
   minimumFractionDigits:2,
   maximumFractionDigits:2
  });
+}
+
+function formatDate(value){
+ const date=new Date(value);
+ return Number.isNaN(date.getTime())
+  ?"Not available"
+  :date.toLocaleString("en-NG");
 }
 
 /* SWITCH AUTH FORMS */
@@ -654,6 +663,217 @@ async function createOrUpdateProfile(user){
  }
 
  return null;
+}
+
+/* CHECK WHETHER CURRENT USER IS AN ADMIN */
+async function checkAdminAccess(user){
+ const panel=document.getElementById("adminPanel");
+ panel.style.display="none";
+ currentUserIsAdmin=false;
+
+ if(!user) return false;
+
+ const {data,error}=await supabase
+  .from("admin_users")
+  .select("user_id")
+  .eq("user_id",user.id)
+  .maybeSingle();
+
+ if(error){
+  console.error("Admin check error:",error.message);
+  return false;
+ }
+
+ if(!data) return false;
+
+ currentUserIsAdmin=true;
+ panel.style.display="block";
+ document.getElementById("adminEmail").textContent=user.email||"Admin";
+
+ await loadAdminFundingRequests();
+
+ return true;
+}
+
+/* LOAD ADMIN FUNDING REQUESTS */
+window.loadAdminFundingRequests=async function(){
+ const container=document.getElementById("adminFundingList");
+ const refreshButton=document.getElementById("refreshAdminButton");
+
+ if(!window.currentUser||!currentUserIsAdmin){
+  container.textContent="Admin access required.";
+  return;
+ }
+
+ refreshButton.disabled=true;
+ refreshButton.textContent="Refreshing...";
+ container.textContent="";
+
+ const loading=document.createElement("p");
+ loading.className="empty-transactions";
+ loading.textContent="Loading customer funding requests...";
+ container.appendChild(loading);
+
+ try{
+  const {data:requests,error}=await supabase
+   .from("wallet_funding_requests")
+   .select("id,user_id,amount,bank,reference,status,created_at,admin_note")
+   .order("created_at",{ascending:false})
+   .limit(100);
+
+  if(error){
+   console.error("Admin requests error:",error);
+   container.textContent="Unable to load requests: "+error.message;
+   showAdminMessage("Could not load funding requests.","red");
+   return;
+  }
+
+  container.textContent="";
+
+  if(!requests||requests.length===0){
+   const empty=document.createElement("p");
+   empty.className="empty-transactions";
+   empty.textContent="There are no customer funding requests yet.";
+   container.appendChild(empty);
+   showAdminMessage("Funding requests loaded successfully.");
+   return;
+  }
+
+  const pendingCount=requests.filter(r=>r.status==="pending").length;
+  showAdminMessage(
+   "Loaded "+requests.length+" request(s). Pending: "+pendingCount+"."
+  );
+
+  requests.forEach(request=>{
+   const item=document.createElement("div");
+   item.className="admin-request";
+
+   const heading=document.createElement("h4");
+   heading.textContent="Funding Request";
+   item.appendChild(heading);
+
+   const fields=[
+    ["Request ID: ",request.id],
+    ["Customer User ID: ",request.user_id],
+    ["Amount: ",formatNaira(request.amount)],
+    ["Bank: ",request.bank],
+    ["Transaction Reference: ",request.reference],
+    ["Submitted: ",formatDate(request.created_at)]
+   ];
+
+   fields.forEach(([label,value])=>{
+    const p=document.createElement("p");
+    p.textContent=label+String(value??"Not available");
+    item.appendChild(p);
+   });
+
+   const status=document.createElement("p");
+   status.textContent="Status: "+request.status;
+   status.className=
+    request.status==="approved"?"status-approved":
+    request.status==="rejected"?"status-rejected":
+    "status-pending";
+   item.appendChild(status);
+
+   if(request.admin_note){
+    const note=document.createElement("p");
+    note.textContent="Admin Note: "+request.admin_note;
+    item.appendChild(note);
+   }
+
+   if(request.status==="pending"){
+    const actions=document.createElement("div");
+    actions.className="admin-actions";
+
+    const approveButton=document.createElement("button");
+    approveButton.textContent="Approve";
+    approveButton.onclick=()=>reviewFundingRequest(request.id,"approve");
+
+    const rejectButton=document.createElement("button");
+    rejectButton.textContent="Reject";
+    rejectButton.className="danger";
+    rejectButton.onclick=()=>reviewFundingRequest(request.id,"reject");
+
+    actions.append(approveButton,rejectButton);
+    item.appendChild(actions);
+   }
+
+   container.appendChild(item);
+  });
+
+ }catch(error){
+  console.error("Admin loading error:",error);
+  container.textContent="Something went wrong while loading requests.";
+ }finally{
+  refreshButton.disabled=false;
+  refreshButton.textContent="Refresh Funding Requests";
+ }
+};
+
+/* APPROVE OR REJECT REQUEST USING SECURE DATABASE FUNCTION */
+async function reviewFundingRequest(requestId,decision){
+ if(!window.currentUser||!currentUserIsAdmin){
+  showAdminMessage("Access denied. Admin only.","red");
+  return;
+ }
+
+ const actionName=decision==="approve"?"APPROVE":"REJECT";
+
+ const confirmed=confirm(
+  "Are you sure you want to "+actionName+
+  " this funding request?\n\n"+
+  (decision==="approve"
+   ?"Only continue after confirming that the money has arrived in your bank account."
+   :"This will reject the customer's funding request.")
+ );
+
+ if(!confirmed) return;
+
+ let note=prompt("Enter an admin note (optional):");
+ if(note===null) return;
+
+ note=note.trim();
+
+ if(note.length>500){
+  alert("Admin note must not exceed 500 characters.");
+  return;
+ }
+
+ showAdminMessage("Processing "+decision+" request...");
+
+ try{
+  const {data,error}=await supabase.rpc("admin_review_funding",{
+   p_request_id:requestId,
+   p_decision:decision,
+   p_admin_note:note||null
+  });
+
+  if(error){
+   console.error("Admin review error:",error);
+   showAdminMessage("Request failed: "+error.message,"red");
+   return;
+  }
+
+  if(!data||data.success!==true){
+   showAdminMessage("The database did not confirm the action. Please check the request.","red");
+   return;
+  }
+
+  if(data.decision==="approved"){
+   showAdminMessage(
+    "Funding approved. "+formatNaira(data.amount)+
+    " has been credited to the customer's wallet."
+   );
+  }else{
+   showAdminMessage("Funding request rejected successfully.");
+  }
+
+  await loadAdminFundingRequests();
+
+ }catch(error){
+  console.error("Review request error:",error);
+  showAdminMessage("Something went wrong. Please refresh and check the request status.","red");
+ }
 }
 
 /* LOAD WALLET BALANCE */
@@ -739,13 +959,9 @@ async function loadTransactions(user){
   });
 
   const date=document.createElement("p");
-  const parsedDate=new Date(transaction.created_at);
-  date.textContent="Date: "+
-   (Number.isNaN(parsedDate.getTime())
-    ?"Not available"
-    :parsedDate.toLocaleString("en-NG"));
-
+  date.textContent="Date: "+formatDate(transaction.created_at);
   item.appendChild(date);
+
   container.appendChild(item);
  });
 }
@@ -813,6 +1029,10 @@ window.submitFundingRequest=async function(){
 
   await loadFundingRequests(user);
 
+  if(currentUserIsAdmin){
+   await loadAdminFundingRequests();
+  }
+
  }catch(error){
   console.error("Funding submission error:",error);
   showFundMessage("Something went wrong. Please try again.","red");
@@ -859,36 +1079,24 @@ async function loadFundingRequests(user){
   const item=document.createElement("div");
   item.className="funding-item";
 
-  const amount=document.createElement("p");
-  amount.textContent="Amount: "+formatNaira(request.amount);
+  const fields=[
+   ["Amount: ",formatNaira(request.amount)],
+   ["Bank: ",request.bank],
+   ["Reference: ",request.reference],
+   ["Status: ",request.status],
+   ["Date: ",formatDate(request.created_at)]
+  ];
 
-  const bank=document.createElement("p");
-  bank.textContent="Bank: "+request.bank;
-
-  const reference=document.createElement("p");
-  reference.textContent="Reference: "+request.reference;
-
-  const status=document.createElement("p");
-  status.textContent="Status: "+request.status;
-
-  const normalizedStatus=String(request.status||"").toLowerCase();
-
-  if(normalizedStatus==="approved"){
-   status.className="status-approved";
-  }else if(normalizedStatus==="rejected"){
-   status.className="status-rejected";
-  }else{
-   status.className="status-pending";
-  }
-
-  const date=document.createElement("p");
-  const parsedDate=new Date(request.created_at);
-  date.textContent="Date: "+
-   (Number.isNaN(parsedDate.getTime())
-    ?"Not available"
-    :parsedDate.toLocaleString("en-NG"));
-
-  item.append(amount,bank,reference,status,date);
+  fields.forEach(([label,value])=>{
+   const p=document.createElement("p");
+   p.textContent=label+String(value??"");
+   if(label==="Status: "){
+    const status=String(value).toLowerCase();
+    p.className=status==="approved"?"status-approved":
+     status==="rejected"?"status-rejected":"status-pending";
+   }
+   item.appendChild(p);
+  });
 
   if(request.admin_note){
    const note=document.createElement("p");
@@ -901,15 +1109,15 @@ async function loadFundingRequests(user){
 }
 
 /* DISPLAY CUSTOMER DASHBOARD */
-let displayedUserId=null;
-
 async function displayUser(user){
  if(!user){
   window.currentUser=null;
   displayedUserId=null;
+  currentUserIsAdmin=false;
 
   document.getElementById("dashboard").style.display="none";
   document.getElementById("authCard").style.display="block";
+  document.getElementById("adminPanel").style.display="none";
   return;
  }
 
@@ -956,7 +1164,8 @@ async function displayUser(user){
  await Promise.all([
   loadWallet(user),
   loadTransactions(user),
-  loadFundingRequests(user)
+  loadFundingRequests(user),
+  checkAdminAccess(user)
  ]);
 }
 
@@ -1045,15 +1254,19 @@ window.logoutCustomer=async function(){
 
  window.currentUser=null;
  displayedUserId=null;
+ currentUserIsAdmin=false;
 
  document.getElementById("dashboard").style.display="none";
  document.getElementById("authCard").style.display="block";
+ document.getElementById("adminPanel").style.display="none";
 
  document.getElementById("walletBalance").textContent="₦0.00";
  document.getElementById("walletMessage").textContent="Please login to view your wallet.";
  document.getElementById("walletTransactions").textContent="";
  document.getElementById("fundingHistory").textContent="";
+ document.getElementById("adminFundingList").textContent="";
  document.getElementById("fundMessage").textContent="";
+ document.getElementById("adminMessage").textContent="";
  document.getElementById("fundAmount").value="";
  document.getElementById("fundBank").value="";
  document.getElementById("fundReference").value="";
@@ -1066,15 +1279,17 @@ window.logoutCustomer=async function(){
 /* CHECK EXISTING LOGIN SESSION */
 supabase.auth.onAuthStateChange((event,session)=>{
  if(event==="SIGNED_IN"&&session?.user){
-  displayUser(session.user);
+  setTimeout(()=>displayUser(session.user),0);
  }
 
  if(event==="SIGNED_OUT"){
   window.currentUser=null;
   displayedUserId=null;
+  currentUserIsAdmin=false;
 
   document.getElementById("dashboard").style.display="none";
   document.getElementById("authCard").style.display="block";
+  document.getElementById("adminPanel").style.display="none";
  }
 });
 

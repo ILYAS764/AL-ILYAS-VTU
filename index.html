@@ -1,1308 +1,194 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AL-ILYAS VTU</title>
-
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
-body{background:#f3f7f5;color:#183328}
-header{background:#087c45;color:white;padding:20px;text-align:center}
-.hero{background:linear-gradient(135deg,#087c45,#13ad68);color:white;text-align:center;padding:35px 15px}
-.container{max-width:650px;margin:25px auto;padding:15px}
-.card{background:white;padding:22px;border-radius:13px;margin-bottom:20px;box-shadow:0 3px 12px #0001}
-h2{color:#087c45;margin-bottom:17px}
-label{display:block;margin:14px 0 7px;font-weight:bold;font-size:14px}
-input,select,textarea{width:100%;padding:13px;border:1px solid #ddd;border-radius:7px;font-size:15px;background:white}
-textarea{min-height:65px;resize:vertical}
-button{padding:13px 15px;margin-top:12px;border:none;border-radius:7px;background:#087c45;color:white;font-size:14px;font-weight:bold;cursor:pointer}
-button:hover{background:#056536}
-button:disabled{opacity:.6;cursor:not-allowed}
-.secondary{background:#555}
-.danger{background:#bd2929}
-.admin-button{width:auto;margin-right:6px}
-.full-button{width:100%}
+*{box-sizing:border-box;font-family:Arial,sans-serif}body{margin:0;background:#f3f7f5;color:#183328}
+header,footer{background:#087c45;color:#fff;text-align:center;padding:20px}
+.hero{background:linear-gradient(135deg,#087c45,#13ad68);color:#fff;text-align:center;padding:35px 15px}
+.container{max-width:680px;margin:25px auto;padding:15px}.card{background:#fff;padding:22px;border-radius:13px;margin-bottom:20px;box-shadow:0 3px 12px #0001}
+h2{color:#087c45;margin:0 0 17px}label{display:block;margin:14px 0 7px;font-weight:bold;font-size:14px}
+input,select,textarea{width:100%;padding:13px;border:1px solid #ddd;border-radius:7px;font-size:15px;background:#fff}
+button{padding:13px 15px;margin-top:12px;border:0;border-radius:7px;background:#087c45;color:#fff;font-size:14px;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}.secondary{background:#555}.danger{background:#bd2929}.full{width:100%}
+.message{font-size:14px;line-height:1.6;margin-top:12px;overflow-wrap:anywhere}.notice,.funding-note{background:#fff5df;padding:13px;border-radius:8px;margin-top:13px;font-size:13px;line-height:1.7}
+.wallet-box{background:linear-gradient(135deg,#087c45,#13ad68);color:#fff;padding:22px;border-radius:12px;margin-top:22px}.wallet-box h2{color:#fff;font-size:30px;margin:8px 0}
+.wallet-note{font-size:12px;margin-top:12px}.bank-details,.admin-heading{background:#e9f8ef;padding:15px;border-radius:9px;margin-top:14px;line-height:1.9;overflow-wrap:anywhere;display:none}
+.admin-heading{display:block;margin-bottom:15px}.admin-label{display:inline-block;background:#087c45;color:#fff;padding:5px 10px;border-radius:20px;font-size:12px;margin-bottom:12px}
+.item{border:1px solid #e5e7eb;border-radius:8px;padding:13px;margin-top:10px;line-height:1.8;overflow-wrap:anywhere}.item p{font-size:13px;margin:4px 0}
+.empty{background:#f3f7f5;padding:15px;border-radius:8px;margin-top:12px;font-size:14px;line-height:1.6}
+.pending{color:#a66b00;font-weight:bold}.approved{color:#087c45;font-weight:bold}.rejected{color:#c62828;font-weight:bold}
+.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1;min-width:100px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .summary{display:none;background:#e9f8ef;padding:16px;border-radius:9px;margin-top:18px;line-height:2;overflow-wrap:anywhere}
-.notice{background:#fff5df;padding:12px;border-radius:7px;margin-top:13px;font-size:13px;line-height:1.6}
-.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-footer{background:#073d27;color:white;text-align:center;padding:25px}
-#dashboard,#adminPanel{display:none}
-.message{font-size:14px;line-height:1.6;margin-top:12px;overflow-wrap:anywhere}
-.wallet-box{background:linear-gradient(135deg,#087c45,#13ad68);color:white;padding:22px;border-radius:12px;margin-top:22px}
-.wallet-box h3{margin-bottom:15px}
-.wallet-box h2{color:white;font-size:30px;margin:8px 0}
-.wallet-box p{font-size:14px}
-.wallet-note{font-size:12px!important;margin-top:12px;opacity:.9}
-.transaction-item,.funding-item,.admin-request{border:1px solid #e5e7eb;border-radius:8px;padding:13px;margin-top:10px;line-height:1.8;overflow-wrap:anywhere}
-.transaction-item p,.funding-item p,.admin-request p{font-size:13px}
-.empty-transactions{background:#f3f7f5;padding:15px;border-radius:8px;margin-top:12px;font-size:14px;line-height:1.6}
-.bank-details{background:#e9f8ef;padding:15px;border-radius:9px;margin-top:14px;line-height:1.9;overflow-wrap:anywhere;display:none}
-.bank-details strong{color:#087c45}
-.funding-note{background:#fff5df;padding:13px;border-radius:8px;margin-top:14px;font-size:13px;line-height:1.7}
-.status-pending{color:#a66b00;font-weight:bold}
-.status-approved{color:#087c45;font-weight:bold}
-.status-rejected{color:#c62828;font-weight:bold}
-.admin-heading{background:#e9f8ef;padding:15px;border-radius:9px;margin-bottom:15px;line-height:1.7}
-.admin-request h4{color:#087c45;margin-bottom:8px}
-.admin-actions{display:flex;gap:8px;flex-wrap:wrap}
-.admin-actions button{flex:1;min-width:100px}
-.admin-label{display:inline-block;background:#087c45;color:white;padding:5px 10px;border-radius:20px;font-size:12px;margin-bottom:12px}
-hr{border:0;border-top:1px solid #eee;margin:18px 0}
+hr{border:0;border-top:1px solid #eee;margin:20px 0}#dashboard,#adminPanel{display:none}
 </style>
 </head>
-
 <body>
-
-<header>
-<h2 style="color:white;margin:0">AL-ILYAS VTU</h2>
-<p>Your Trusted Data & Airtime Platform</p>
-</header>
-
-<section class="hero">
-<h1>Welcome to AL-ILYAS VTU</h1>
-<p>Buy affordable Data and Airtime in Nigeria.</p>
-</section>
-
+<header><h2 style="color:white;margin:0">AL-ILYAS VTU</h2><p>Your Trusted Data & Airtime Platform</p></header>
+<section class="hero"><h1>Welcome to AL-ILYAS VTU</h1><p>Buy affordable Data and Airtime in Nigeria.</p></section>
 <main class="container">
 
-<!-- CUSTOMER AUTHENTICATION -->
 <section class="card" id="authCard">
 <h2>👤 Customer Account</h2>
-
 <div id="registerForm">
 <h3>Create Account</h3>
-
-<label>Full Name</label>
-<input id="regName" type="text" placeholder="Enter your full name">
-
-<label>Phone Number</label>
-<input id="regPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="08012345678">
-
-<label>Email Address</label>
-<input id="regEmail" type="email" placeholder="Enter your email">
-
-<label>Password</label>
-<input id="regPassword" type="password" placeholder="Create a password">
-
-<button class="full-button" onclick="registerCustomer()">Create Account</button>
-
-<p style="margin-top:15px;text-align:center">Already have an account?</p>
-<button class="secondary full-button" onclick="showLogin()">Login</button>
+<label>Full Name</label><input id="regName" placeholder="Enter your full name">
+<label>Phone Number</label><input id="regPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="08012345678">
+<label>Email Address</label><input id="regEmail" type="email" placeholder="Enter your email">
+<label>Password</label><input id="regPassword" type="password" placeholder="Create a password">
+<button class="full" onclick="registerCustomer()">Create Account</button>
+<p style="text-align:center;margin-top:15px">Already have an account?</p>
+<button class="secondary full" onclick="showLogin()">Login</button>
 </div>
-
 <div id="loginForm" style="display:none">
 <h3>Customer Login</h3>
-
-<label>Email Address</label>
-<input id="loginEmail" type="email" placeholder="Enter your email">
-
-<label>Password</label>
-<input id="loginPassword" type="password" placeholder="Enter your password">
-
-<button class="full-button" onclick="loginCustomer()">Login</button>
-<button class="secondary full-button" onclick="showRegister()">Create New Account</button>
+<label>Email Address</label><input id="loginEmail" type="email" placeholder="Enter your email">
+<label>Password</label><input id="loginPassword" type="password" placeholder="Enter your password">
+<button class="full" onclick="loginCustomer()">Login</button>
+<button class="secondary full" onclick="showRegister()">Create New Account</button>
 </div>
-
-<p class="message" id="authMessage" aria-live="polite"></p>
+<p id="authMessage" class="message" aria-live="polite"></p>
 </section>
 
-<!-- CUSTOMER DASHBOARD -->
 <section class="card" id="dashboard">
 <h2>My Dashboard</h2>
-
 <p><b>Name:</b> <span id="profileName"></span></p>
 <p style="margin-top:10px"><b>Email:</b> <span id="profileEmail"></span></p>
 <p style="margin-top:10px"><b>Phone:</b> <span id="profilePhone"></span></p>
 
-<!-- ADMIN PANEL: ONLY VISIBLE TO ADMIN -->
 <section id="adminPanel" style="margin-top:25px">
 <div class="admin-heading">
-<span class="admin-label">ADMIN ACCESS</span>
-<h2 style="margin-bottom:8px">⚙️ Admin Dashboard</h2>
-<p>Manage customer wallet funding requests.</p>
+<span class="admin-label">ADMIN ACCESS</span><h2 style="margin-bottom:8px">⚙️ Admin Dashboard</h2>
+<p>Manage real customer funding requests and separate test requests.</p>
 <p><b>Admin:</b> <span id="adminEmail"></span></p>
 </div>
 
-<h3 style="color:#087c45">📥 Customer Funding Requests</h3>
-
-<div class="notice">
-<strong>Important:</strong> Check your OPay or Moniepoint account and confirm that the transfer has actually arrived before approving a request. A submitted reference alone is not proof of payment.
-</div>
-
-<button class="full-button" id="refreshAdminButton" onclick="loadAdminFundingRequests()">
-Refresh Funding Requests
-</button>
-
+<h3 style="color:#087c45">📥 REAL Customer Funding Requests</h3>
+<div class="notice"><b>Important:</b> Verify that money has actually arrived in OPay/Moniepoint before approving a REAL request. A reference alone is not proof of payment.</div>
+<button class="full" id="refreshAdminButton" onclick="loadAdminFundingRequests()">Refresh Real Requests</button>
 <p id="adminMessage" class="message" aria-live="polite"></p>
+<div id="adminFundingList"><p class="empty">Loading requests...</p></div>
 
-<div id="adminFundingList">
-<p class="empty-transactions">Loading admin requests...</p>
-</div>
+<hr>
+<h3 style="color:#087c45">🧪 TEST Funding Requests</h3>
+<div class="notice"><b>Test area only:</b> These requests are read from <code>wallet_funding_requests_test</code> and reviewed using <code>admin_review_funding_test</code>. This section is separate from real customer funding. Do not use it to verify or approve real transfers.</div>
+<button class="full" id="refreshTestButton" onclick="loadTestFundingRequests()">Refresh Test Requests</button>
+<p id="testAdminMessage" class="message" aria-live="polite"></p>
+<div id="testFundingList"><p class="empty">Test requests will appear here.</p></div>
 </section>
 
-<!-- CUSTOMER WALLET -->
-<div class="wallet-box">
-<h3>💰 My Wallet</h3>
-<p>Available Balance</p>
-<h2 id="walletBalance">₦0.00</h2>
-<p id="walletMessage" class="wallet-note">Loading wallet...</p>
-</div>
+<div class="wallet-box"><h3>💰 My Wallet</h3><p>Available Balance</p><h2 id="walletBalance">₦0.00</h2><p id="walletMessage" class="wallet-note">Loading wallet...</p></div>
 
-<!-- FUND WALLET -->
 <div style="margin-top:25px">
 <h3 style="color:#087c45">💳 Fund My Wallet</h3>
-
-<p style="font-size:13px;line-height:1.6;margin-top:8px">
-Transfer money to one of the accounts below, then submit your transaction details.
-</p>
-
-<label>Amount (₦)</label>
-<input id="fundAmount" type="number" min="100" max="1000000" step="1" placeholder="Enter amount (minimum ₦100)">
-
-<label>Select Bank</label>
-<select id="fundBank">
-<option value="">Select payment bank</option>
-<option value="OPay">OPay</option>
-<option value="Moniepoint">Moniepoint</option>
-</select>
-
+<p style="font-size:13px;line-height:1.6;margin-top:8px">Transfer money to one of the accounts below, then submit your transaction details.</p>
+<label>Amount (₦)</label><input id="fundAmount" type="number" min="100" max="1000000" step="1" placeholder="Minimum ₦100">
+<label>Select Bank</label><select id="fundBank"><option value="">Select payment bank</option><option value="OPay">OPay</option><option value="Moniepoint">Moniepoint</option></select>
 <div class="bank-details" id="bankDetails">
-<p><strong>Bank:</strong> <span id="bankName"></span></p>
-<p><strong>Account Name:</strong> ILIYASU MUHAMMAD</p>
-<p><strong>Account Number:</strong> <span id="bankAccount"></span></p>
-<p style="font-size:12px;margin-top:8px">Please confirm the account name and number before making your transfer.</p>
+<p><b>Bank:</b> <span id="bankName"></span></p><p><b>Account Name:</b> ILIYASU MUHAMMAD</p><p><b>Account Number:</b> <span id="bankAccount"></span></p>
 </div>
-
-<label>Transaction Reference</label>
-<input id="fundReference" type="text" maxlength="100" placeholder="Enter your bank transfer reference">
-
-<div class="funding-note">
-<strong>Important:</strong> Transfer first, then submit your transaction reference. Your request remains pending until the administrator verifies the payment. Entering a reference does not automatically add money to your wallet.
-</div>
-
-<button class="full-button" id="fundButton" onclick="submitFundingRequest()">Submit Funding Request</button>
+<label>Transaction Reference</label><input id="fundReference" maxlength="100" placeholder="Enter your bank transfer reference">
+<div class="funding-note"><b>Important:</b> Your request remains pending until the administrator verifies the payment. Entering a reference does not automatically add money to your wallet.</div>
+<button class="full" id="fundButton" onclick="submitFundingRequest()">Submit Funding Request</button>
 <p id="fundMessage" class="message" aria-live="polite"></p>
 </div>
 
-<!-- FUNDING HISTORY -->
-<div style="margin-top:25px">
-<h3 style="color:#087c45">📑 My Funding History</h3>
-<div id="fundingHistory">
-<p class="empty-transactions">Loading funding history...</p>
-</div>
-</div>
-
-<!-- WALLET TRANSACTION HISTORY -->
-<div style="margin-top:25px">
-<h3 style="color:#087c45">📋 Recent Wallet Transactions</h3>
-<div id="walletTransactions">
-<p class="empty-transactions">Loading transactions...</p>
-</div>
-</div>
-
-<button class="secondary full-button" onclick="logoutCustomer()">Logout</button>
+<div style="margin-top:25px"><h3 style="color:#087c45">📑 My Funding History</h3><div id="fundingHistory"><p class="empty">Loading...</p></div></div>
+<div style="margin-top:25px"><h3 style="color:#087c45">📋 Recent Wallet Transactions</h3><div id="walletTransactions"><p class="empty">Loading...</p></div></div>
+<button class="secondary full" onclick="logoutCustomer()">Logout</button>
 </section>
 
-<!-- DATA PURCHASE -->
 <section class="card">
 <h2>📶 Buy Data</h2>
-
-<label>Network</label>
-<select id="dataNetwork">
-<option value="">Select Network</option>
-<option>MTN</option>
-<option>Airtel</option>
-<option>Glo</option>
-<option>9mobile</option>
-</select>
-
-<label>Phone Number</label>
-<input id="dataPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="Enter phone number">
-
-<label>Data Plan</label>
-<select id="dataPlan">
-<option value="">Select Data Plan</option>
-</select>
-
+<label>Network</label><select id="dataNetwork"><option value="">Select Network</option><option>MTN</option><option>Airtel</option><option>Glo</option><option>9mobile</option></select>
+<label>Phone Number</label><input id="dataPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="Enter phone number">
+<label>Data Plan</label><select id="dataPlan"><option value="">Select Data Plan</option></select>
 <p style="margin-top:12px;font-weight:bold">Price: <span id="dataPrice">₦0</span></p>
-
-<button class="full-button" onclick="buyData()">Continue Data Order</button>
-<div class="summary" id="dataSummary"></div>
+<button class="full" onclick="buyData()">Continue Data Order</button><div class="summary" id="dataSummary"></div>
 </section>
 
-<!-- AIRTIME PURCHASE -->
 <section class="card">
 <h2>📱 Buy Airtime</h2>
-
-<label>Network</label>
-<select id="airNetwork">
-<option value="">Select Network</option>
-<option>MTN</option>
-<option>Airtel</option>
-<option>Glo</option>
-<option>9mobile</option>
-</select>
-
-<label>Phone Number</label>
-<input id="airPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="Enter phone number">
-
-<label>Airtime Amount (₦)</label>
-<input id="airAmount" type="number" min="50" max="100000" placeholder="Enter amount">
-
-<label>Discount (%)</label>
-<input id="discount" type="number" min="0" max="100" value="2">
-
-<div style="background:#e9f8ef;padding:15px;margin-top:15px;border-radius:8px;line-height:2">
-<p>Discount: <b id="discountValue">₦0</b></p>
-<p>Customer Pays: <b id="payable">₦0</b></p>
-</div>
-
-<button class="full-button" onclick="buyAirtime()">Continue Airtime Order</button>
-<div class="summary" id="airSummary"></div>
+<label>Network</label><select id="airNetwork"><option value="">Select Network</option><option>MTN</option><option>Airtel</option><option>Glo</option><option>9mobile</option></select>
+<label>Phone Number</label><input id="airPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="Enter phone number">
+<label>Airtime Amount (₦)</label><input id="airAmount" type="number" min="50" max="100000" placeholder="Enter amount">
+<label>Discount (%)</label><input id="discount" type="number" min="0" max="100" value="2" disabled>
+<div style="background:#e9f8ef;padding:15px;margin-top:15px;border-radius:8px;line-height:2"><p>Discount: <b id="discountValue">₦0</b></p><p>Customer Pays: <b id="payable">₦0</b></p></div>
+<button class="full" onclick="buyAirtime()">Continue Airtime Order</button><div class="summary" id="airSummary"></div>
 </section>
 
-<!-- ADMIN DEMO SETTINGS -->
 <section class="card">
-<h2>⚙️ Admin Price Settings</h2>
-
-<p style="font-size:13px;line-height:1.6">
-Demo settings for editing data prices and airtime discount.
-</p>
-
-<label>Network</label>
-<select id="adminNetwork">
-<option>MTN</option>
-<option>Airtel</option>
-<option>Glo</option>
-<option>9mobile</option>
-</select>
-
-<div class="admin-grid">
-<div>
-<label>500MB (₦)</label>
-<input id="p500" type="number" min="1">
-</div>
-<div>
-<label>1GB (₦)</label>
-<input id="p1" type="number" min="1">
-</div>
-<div>
-<label>2GB (₦)</label>
-<input id="p2" type="number" min="1">
-</div>
-<div>
-<label>5GB (₦)</label>
-<input id="p5" type="number" min="1">
-</div>
-</div>
-
-<label>Airtime Discount (%)</label>
-<input id="adminDiscount" type="number" min="0" max="100">
-
-<button class="full-button" onclick="saveSettings()">Save Settings</button>
-
-<div class="notice">
-These price settings are still a frontend demonstration, not a secure admin system. Anyone visiting the website can access them. Do not use them to control real VTU prices yet.
-</div>
+<h2>⚙️ Admin Price Settings (Demo)</h2>
+<p style="font-size:13px;line-height:1.6">These settings are stored only in this browser and are not secure admin controls.</p>
+<label>Network</label><select id="adminNetwork"><option>MTN</option><option>Airtel</option><option>Glo</option><option>9mobile</option></select>
+<div class="grid"><div><label>500MB (₦)</label><input id="p500" type="number"></div><div><label>1GB (₦)</label><input id="p1" type="number"></div><div><label>2GB (₦)</label><input id="p2" type="number"></div><div><label>5GB (₦)</label><input id="p5" type="number"></div></div>
+<label>Airtime Discount (%)</label><input id="adminDiscount" type="number" min="0" max="100">
+<button class="full" onclick="saveSettings()">Save Settings</button>
+<div class="notice">Do not use these browser-only prices to control real VTU transactions.</div>
 </section>
-
 </main>
+<footer><h3>AL-ILYAS VTU</h3><p>Fast, Reliable and Affordable Services.</p><p>© 2026 AL-ILYAS VTU</p></footer>
 
-<footer>
-<h3>AL-ILYAS VTU</h3>
-<p>Fast, Reliable and Affordable Services.</p>
-<p>© 2026 AL-ILYAS VTU</p>
-</footer>
-
-<!-- DATA AND AIRTIME FUNCTIONS -->
 <script>
-const defaultPrices = {
- MTN:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
- Airtel:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
- Glo:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
- "9mobile":{"500MB":150,"1GB":300,"2GB":600,"5GB":1500}
-};
-
-let prices=JSON.parse(JSON.stringify(defaultPrices));
-let airtimeDiscount=2;
-
-function updateDataPlans(){
- const net=document.getElementById("dataNetwork").value;
- const plan=document.getElementById("dataPlan");
- plan.innerHTML='<option value="">Select Data Plan</option>';
-
- if(!net){
-  document.getElementById("dataPrice").textContent="₦0";
-  return;
- }
-
- Object.keys(prices[net]).forEach(size=>{
-  const option=document.createElement("option");
-  option.value=size;
-  option.textContent=size;
-  plan.appendChild(option);
- });
- updateDataPrice();
-}
-
-function updateDataPrice(){
- const net=document.getElementById("dataNetwork").value;
- const size=document.getElementById("dataPlan").value;
- document.getElementById("dataPrice").textContent=
- net&&size?"₦"+prices[net][size].toLocaleString("en-NG"):"₦0";
-}
-
-document.getElementById("dataNetwork").addEventListener("change",updateDataPlans);
-document.getElementById("dataPlan").addEventListener("change",updateDataPrice);
-
-function generateOrderID(){
- return "ALIYAS"+Date.now();
-}
-
-function validPhone(phone){
- return /^\d{11}$/.test(phone);
-}
-
-function buyData(){
- if(!window.currentUser){
-  alert("Please login before placing an order.");
-  document.getElementById("authCard").scrollIntoView();
-  return;
- }
-
- const net=document.getElementById("dataNetwork").value;
- const phone=document.getElementById("dataPhone").value.trim();
- const size=document.getElementById("dataPlan").value;
-
- if(!net||!size||!validPhone(phone)){
-  alert("Please enter a valid phone number and select network and plan.");
-  return;
- }
-
- const price=prices[net][size];
- const summary=document.getElementById("dataSummary");
- summary.style.display="block";
- summary.textContent="";
-
- const title=document.createElement("h3");
- title.textContent="Data Order Summary";
- summary.appendChild(title);
-
- [
-  "Order ID: "+generateOrderID(),
-  "Network: "+net,
-  "Phone: "+phone,
-  "Plan: "+size,
-  "Amount: ₦"+price.toLocaleString("en-NG"),
-  "DEMO ONLY: No payment or data delivery has occurred."
- ].forEach(item=>{
-  const p=document.createElement("p");
-  p.textContent=item;
-  summary.appendChild(p);
- });
-}
-
-function calculateAirtime(){
- const amount=Number(document.getElementById("airAmount").value);
-
- if(!Number.isSafeInteger(amount)||amount<50||amount>100000){
-  document.getElementById("discountValue").textContent="₦0";
-  document.getElementById("payable").textContent="₦0";
-  return;
- }
-
- const saving=amount*airtimeDiscount/100;
- const payable=amount-saving;
-
- document.getElementById("discountValue").textContent="₦"+saving.toFixed(2);
- document.getElementById("payable").textContent="₦"+payable.toFixed(2);
-}
-
-document.getElementById("airAmount").addEventListener("input",calculateAirtime);
-
-function buyAirtime(){
- if(!window.currentUser){
-  alert("Please login before placing an order.");
-  document.getElementById("authCard").scrollIntoView();
-  return;
- }
-
- const net=document.getElementById("airNetwork").value;
- const phone=document.getElementById("airPhone").value.trim();
- const amount=Number(document.getElementById("airAmount").value);
-
- if(!net||!validPhone(phone)||!Number.isSafeInteger(amount)||amount<50||amount>100000){
-  alert("Please enter valid airtime details.");
-  return;
- }
-
- const saving=amount*airtimeDiscount/100;
- const payable=amount-saving;
- const summary=document.getElementById("airSummary");
-
- summary.style.display="block";
- summary.textContent="";
-
- const title=document.createElement("h3");
- title.textContent="Airtime Order Summary";
- summary.appendChild(title);
-
- [
-  "Order ID: "+generateOrderID(),
-  "Network: "+net,
-  "Phone: "+phone,
-  "Airtime Value: ₦"+amount.toLocaleString("en-NG"),
-  "Discount: "+airtimeDiscount+"%",
-  "Discount Value: ₦"+saving.toFixed(2),
-  "Customer Pays: ₦"+payable.toFixed(2),
-  "DEMO ONLY: No payment or airtime delivery has occurred."
- ].forEach(item=>{
-  const p=document.createElement("p");
-  p.textContent=item;
-  summary.appendChild(p);
- });
-}
-
-const adminNetwork=document.getElementById("adminNetwork");
-
-function loadAdminSettings(){
- const p=prices[adminNetwork.value];
- document.getElementById("p500").value=p["500MB"];
- document.getElementById("p1").value=p["1GB"];
- document.getElementById("p2").value=p["2GB"];
- document.getElementById("p5").value=p["5GB"];
- document.getElementById("adminDiscount").value=airtimeDiscount;
-}
-
-adminNetwork.addEventListener("change",loadAdminSettings);
-
-function saveSettings(){
- const values={
-  "500MB":Number(document.getElementById("p500").value),
-  "1GB":Number(document.getElementById("p1").value),
-  "2GB":Number(document.getElementById("p2").value),
-  "5GB":Number(document.getElementById("p5").value)
- };
-
- const discount=Number(document.getElementById("adminDiscount").value);
-
- if(!Object.values(values).every(v=>Number.isSafeInteger(v)&&v>0)){
-  alert("Enter valid data prices.");
-  return;
- }
-
- if(!Number.isFinite(discount)||discount<0||discount>100){
-  alert("Enter a valid discount between 0 and 100.");
-  return;
- }
-
- prices[adminNetwork.value]=values;
- airtimeDiscount=discount;
-
- try{
-  localStorage.setItem("aliyas_vtu_prices",JSON.stringify(prices));
-  localStorage.setItem("aliyas_vtu_discount",String(discount));
- }catch(error){
-  alert("Could not save settings.");
-  return;
- }
-
- updateDataPrice();
- calculateAirtime();
- alert("Settings saved successfully!");
-}
-
-function restoreSettings(){
- try{
-  const saved=localStorage.getItem("aliyas_vtu_prices");
-  const savedDiscount=localStorage.getItem("aliyas_vtu_discount");
-
-  if(saved){
-   const parsed=JSON.parse(saved);
-   for(const net of Object.keys(defaultPrices)){
-    for(const size of Object.keys(defaultPrices[net])){
-     const value=parsed?.[net]?.[size];
-     if(Number.isSafeInteger(value)&&value>0){
-      prices[net][size]=value;
-     }
-    }
-   }
-  }
-
-  if(savedDiscount!==null){
-   const d=Number(savedDiscount);
-   if(Number.isFinite(d)&&d>=0&&d<=100) airtimeDiscount=d;
-  }
- }catch(error){
-  console.log("Using default demo settings.");
- }
-}
-
-restoreSettings();
-loadAdminSettings();
+const defaultPrices={MTN:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},Airtel:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},Glo:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},"9mobile":{"500MB":150,"1GB":300,"2GB":600,"5GB":1500}};
+let prices=JSON.parse(JSON.stringify(defaultPrices)),airtimeDiscount=2;
+const $=id=>document.getElementById(id);
+function validPhone(p){return /^\d{11}$/.test(p)}
+function updateDataPlans(){const n=$("dataNetwork").value,s=$("dataPlan");s.innerHTML='<option value="">Select Data Plan</option>';if(!n){$("dataPrice").textContent="₦0";return}Object.keys(prices[n]).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=k;s.appendChild(o)});updateDataPrice()}
+function updateDataPrice(){const n=$("dataNetwork").value,p=$("dataPlan").value;$("dataPrice").textContent=n&&p?"₦"+prices[n][p].toLocaleString("en-NG"):"₦0"}
+$("dataNetwork").addEventListener("change",updateDataPlans);$("dataPlan").addEventListener("change",updateDataPrice);
+function orderId(){return "ALIYAS"+Date.now()}
+function showSummary(id,title,lines){const box=$(id);box.style.display="block";box.textContent="";const h=document.createElement("h3");h.textContent=title;box.appendChild(h);lines.forEach(t=>{const p=document.createElement("p");p.textContent=t;box.appendChild(p)})}
+function buyData(){if(!window.currentUser){alert("Please login before ordering.");$("authCard").scrollIntoView();return}const n=$("dataNetwork").value,p=$("dataPhone").value.trim(),s=$("dataPlan").value;if(!n||!s||!validPhone(p)){alert("Enter a valid phone number, network and plan.");return}showSummary("dataSummary","Data Order Summary",["Order ID: "+orderId(),"Network: "+n,"Phone: "+p,"Plan: "+s,"Amount: ₦"+prices[n][s],"DEMO ONLY: No payment or data delivery has occurred."])}
+function calcAirtime(){const a=Number($("airAmount").value);if(!Number.isSafeInteger(a)||a<50||a>100000){$("discountValue").textContent="₦0";$("payable").textContent="₦0";return}const d=a*airtimeDiscount/100;$("discountValue").textContent="₦"+d.toFixed(2);$("payable").textContent="₦"+(a-d).toFixed(2)}
+$("airAmount").addEventListener("input",calcAirtime);
+function buyAirtime(){if(!window.currentUser){alert("Please login before ordering.");$("authCard").scrollIntoView();return}const n=$("airNetwork").value,p=$("airPhone").value.trim(),a=Number($("airAmount").value);if(!n||!validPhone(p)||!Number.isSafeInteger(a)||a<50||a>100000){alert("Enter valid airtime details.");return}const d=a*airtimeDiscount/100;showSummary("airSummary","Airtime Order Summary",["Order ID: "+orderId(),"Network: "+n,"Phone: "+p,"Airtime Value: ₦"+a,"Discount: "+airtimeDiscount+"%","Discount Value: ₦"+d.toFixed(2),"Customer Pays: ₦"+(a-d).toFixed(2),"DEMO ONLY: No payment or airtime delivery has occurred."])}
+function loadSettings(){const p=prices[$("adminNetwork").value];$("p500").value=p["500MB"];$("p1").value=p["1GB"];$("p2").value=p["2GB"];$("p5").value=p["5GB"];$("adminDiscount").value=airtimeDiscount}
+$("adminNetwork").addEventListener("change",loadSettings);
+function saveSettings(){const v={"500MB":Number($("p500").value),"1GB":Number($("p1").value),"2GB":Number($("p2").value),"5GB":Number($("p5").value)},d=Number($("adminDiscount").value);if(!Object.values(v).every(x=>Number.isSafeInteger(x)&&x>0)||!Number.isFinite(d)||d<0||d>100){alert("Enter valid prices and discount.");return}prices[$("adminNetwork").value]=v;airtimeDiscount=d;try{localStorage.setItem("aliyas_vtu_prices",JSON.stringify(prices));localStorage.setItem("aliyas_vtu_discount",String(d))}catch(e){}updateDataPrice();calcAirtime();alert("Demo settings saved.")}
+try{const saved=JSON.parse(localStorage.getItem("aliyas_vtu_prices")||"null");if(saved)for(const n in defaultPrices)for(const s in defaultPrices[n])if(Number.isSafeInteger(saved?.[n]?.[s])&&saved[n][s]>0)prices[n][s]=saved[n][s];const d=Number(localStorage.getItem("aliyas_vtu_discount"));if(Number.isFinite(d)&&d>=0&&d<=100)airtimeDiscount=d}catch(e){}loadSettings();
 </script>
 
-<!-- SUPABASE AUTHENTICATION, WALLET, FUNDING AND ADMIN -->
 <script type="module">
-import { createClient } from
-"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import {createClient} from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-/* SUPABASE PROJECT DETAILS
-   Keep your existing real Project URL and Publishable Key here.
-   NEVER put a Secret or service_role key in this file.
-*/
- const SUPABASE_URL = "https://bfmsbdgjdaiqmypcuxce.supabase.co";
+/* Replace these two placeholders with your Supabase Project URL and Publishable key.
+   Do NOT use the Secret/service_role key in this public website. */
+const SUPABASE_URL = "https://bfmsbdgjdaiqmypcuxce.supabase.co";
 const SUPABASE_KEY = "sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
-
-const supabase = createClient(SUPABASE_URL,SUPABASE_KEY);
-
+ 
+const supabase=createClient(SUPABASE_URL,SUPABASE_KEY);
 window.currentUser=null;
-
-const authMessage=document.getElementById("authMessage");
-const fundMessage=document.getElementById("fundMessage");
-const adminMessage=document.getElementById("adminMessage");
-
-let displayedUserId=null;
-let currentUserIsAdmin=false;
-
-/* BANK ACCOUNT DETAILS */
-const bankAccounts={
- OPay:{
-  name:"OPay",
-  account:"6458790287",
-  accountName:"ILIYASU MUHAMMAD"
- },
- Moniepoint:{
-  name:"Moniepoint",
-  account:"8136438501",
-  accountName:"ILIYASU MUHAMMAD"
- }
-};
-
-function showMessage(message,color="#087c45"){
- authMessage.textContent=message;
- authMessage.style.color=color;
-}
-
-function showFundMessage(message,color="#087c45"){
- fundMessage.textContent=message;
- fundMessage.style.color=color;
-}
-
-function showAdminMessage(message,color="#087c45"){
- adminMessage.textContent=message;
- adminMessage.style.color=color;
-}
-
-function formatNaira(amount){
- const value=Number(amount);
- if(!Number.isFinite(value)) return "₦0.00";
-
- return "₦"+value.toLocaleString("en-NG",{
-  minimumFractionDigits:2,
-  maximumFractionDigits:2
- });
-}
-
-function formatDate(value){
- const date=new Date(value);
- return Number.isNaN(date.getTime())
-  ?"Not available"
-  :date.toLocaleString("en-NG");
-}
-
-/* SWITCH AUTH FORMS */
-window.showLogin=function(){
- document.getElementById("registerForm").style.display="none";
- document.getElementById("loginForm").style.display="block";
- showMessage("");
-};
-
-window.showRegister=function(){
- document.getElementById("registerForm").style.display="block";
- document.getElementById("loginForm").style.display="none";
- showMessage("");
-};
-
-/* SHOW SELECTED BANK ACCOUNT */
-document.getElementById("fundBank").addEventListener("change",function(){
- const bank=this.value;
- const details=document.getElementById("bankDetails");
-
- if(!bank||!bankAccounts[bank]){
-  details.style.display="none";
-  return;
- }
-
- document.getElementById("bankName").textContent=bankAccounts[bank].name;
- document.getElementById("bankAccount").textContent=bankAccounts[bank].account;
- details.style.display="block";
-});
-
-/* CREATE OR UPDATE CUSTOMER PROFILE */
-async function createOrUpdateProfile(user){
- if(!user) return null;
-
- const metadata=user.user_metadata||{};
-
- const profile={
-  id:user.id,
-  full_name:metadata.full_name||user.email,
-  phone:metadata.phone||null
- };
-
- const {error}=await supabase
-  .from("profiles")
-  .upsert(profile,{onConflict:"id"});
-
- if(error){
-  console.error("Profile error:",error.message);
-  return error;
- }
-
- return null;
-}
-
-/* CHECK WHETHER CURRENT USER IS AN ADMIN */
-async function checkAdminAccess(user){
- const panel=document.getElementById("adminPanel");
- panel.style.display="none";
- currentUserIsAdmin=false;
-
- if(!user) return false;
-
- const {data,error}=await supabase
-  .from("admin_users")
-  .select("user_id")
-  .eq("user_id",user.id)
-  .maybeSingle();
-
- if(error){
-  console.error("Admin check error:",error.message);
-  return false;
- }
-
- if(!data) return false;
-
- currentUserIsAdmin=true;
- panel.style.display="block";
- document.getElementById("adminEmail").textContent=user.email||"Admin";
-
- await loadAdminFundingRequests();
-
- return true;
-}
-
-/* LOAD ADMIN FUNDING REQUESTS */
-window.loadAdminFundingRequests=async function(){
- const container=document.getElementById("adminFundingList");
- const refreshButton=document.getElementById("refreshAdminButton");
-
- if(!window.currentUser||!currentUserIsAdmin){
-  container.textContent="Admin access required.";
-  return;
- }
-
- refreshButton.disabled=true;
- refreshButton.textContent="Refreshing...";
- container.textContent="";
-
- const loading=document.createElement("p");
- loading.className="empty-transactions";
- loading.textContent="Loading customer funding requests...";
- container.appendChild(loading);
-
- try{
-  const {data:requests,error}=await supabase
-   .from("wallet_funding_requests")
-   .select("id,user_id,amount,bank,reference,status,created_at,admin_note")
-   .order("created_at",{ascending:false})
-   .limit(100);
-
-  if(error){
-   console.error("Admin requests error:",error);
-   container.textContent="Unable to load requests: "+error.message;
-   showAdminMessage("Could not load funding requests.","red");
-   return;
-  }
-
-  container.textContent="";
-
-  if(!requests||requests.length===0){
-   const empty=document.createElement("p");
-   empty.className="empty-transactions";
-   empty.textContent="There are no customer funding requests yet.";
-   container.appendChild(empty);
-   showAdminMessage("Funding requests loaded successfully.");
-   return;
-  }
-
-  const pendingCount=requests.filter(r=>r.status==="pending").length;
-  showAdminMessage(
-   "Loaded "+requests.length+" request(s). Pending: "+pendingCount+"."
-  );
-
-  requests.forEach(request=>{
-   const item=document.createElement("div");
-   item.className="admin-request";
-
-   const heading=document.createElement("h4");
-   heading.textContent="Funding Request";
-   item.appendChild(heading);
-
-   const fields=[
-    ["Request ID: ",request.id],
-    ["Customer User ID: ",request.user_id],
-    ["Amount: ",formatNaira(request.amount)],
-    ["Bank: ",request.bank],
-    ["Transaction Reference: ",request.reference],
-    ["Submitted: ",formatDate(request.created_at)]
-   ];
-
-   fields.forEach(([label,value])=>{
-    const p=document.createElement("p");
-    p.textContent=label+String(value??"Not available");
-    item.appendChild(p);
-   });
-
-   const status=document.createElement("p");
-   status.textContent="Status: "+request.status;
-   status.className=
-    request.status==="approved"?"status-approved":
-    request.status==="rejected"?"status-rejected":
-    "status-pending";
-   item.appendChild(status);
-
-   if(request.admin_note){
-    const note=document.createElement("p");
-    note.textContent="Admin Note: "+request.admin_note;
-    item.appendChild(note);
-   }
-
-   if(request.status==="pending"){
-    const actions=document.createElement("div");
-    actions.className="admin-actions";
-
-    const approveButton=document.createElement("button");
-    approveButton.textContent="Approve";
-    approveButton.onclick=()=>reviewFundingRequest(request.id,"approve");
-
-    const rejectButton=document.createElement("button");
-    rejectButton.textContent="Reject";
-    rejectButton.className="danger";
-    rejectButton.onclick=()=>reviewFundingRequest(request.id,"reject");
-
-    actions.append(approveButton,rejectButton);
-    item.appendChild(actions);
-   }
-
-   container.appendChild(item);
-  });
-
- }catch(error){
-  console.error("Admin loading error:",error);
-  container.textContent="Something went wrong while loading requests.";
- }finally{
-  refreshButton.disabled=false;
-  refreshButton.textContent="Refresh Funding Requests";
- }
-};
-
-/* APPROVE OR REJECT REQUEST USING SECURE DATABASE FUNCTION */
-async function reviewFundingRequest(requestId,decision){
- if(!window.currentUser||!currentUserIsAdmin){
-  showAdminMessage("Access denied. Admin only.","red");
-  return;
- }
-
- const actionName=decision==="approve"?"APPROVE":"REJECT";
-
- const confirmed=confirm(
-  "Are you sure you want to "+actionName+
-  " this funding request?\n\n"+
-  (decision==="approve"
-   ?"Only continue after confirming that the money has arrived in your bank account."
-   :"This will reject the customer's funding request.")
- );
-
- if(!confirmed) return;
-
- let note=prompt("Enter an admin note (optional):");
- if(note===null) return;
-
- note=note.trim();
-
- if(note.length>500){
-  alert("Admin note must not exceed 500 characters.");
-  return;
- }
-
- showAdminMessage("Processing "+decision+" request...");
-
- try{
-  const {data,error}=await supabase.rpc("admin_review_funding",{
-   p_request_id:requestId,
-   p_decision:decision,
-   p_admin_note:note||null
-  });
-
-  if(error){
-   console.error("Admin review error:",error);
-   showAdminMessage("Request failed: "+error.message,"red");
-   return;
-  }
-
-  if(!data||data.success!==true){
-   showAdminMessage("The database did not confirm the action. Please check the request.","red");
-   return;
-  }
-
-  if(data.decision==="approved"){
-   showAdminMessage(
-    "Funding approved. "+formatNaira(data.amount)+
-    " has been credited to the customer's wallet."
-   );
-  }else{
-   showAdminMessage("Funding request rejected successfully.");
-  }
-
-  await loadAdminFundingRequests();
-
- }catch(error){
-  console.error("Review request error:",error);
-  showAdminMessage("Something went wrong. Please refresh and check the request status.","red");
- }
-}
-
-/* LOAD WALLET BALANCE */
-async function loadWallet(user){
- const balanceElement=document.getElementById("walletBalance");
- const messageElement=document.getElementById("walletMessage");
-
- balanceElement.textContent="Loading...";
- messageElement.textContent="Connecting to your wallet...";
-
- const {data:wallet,error}=await supabase
-  .from("wallets")
-  .select("balance")
-  .eq("user_id",user.id)
-  .maybeSingle();
-
- if(error){
-  console.error("Wallet error:",error.message);
-  balanceElement.textContent="Unavailable";
-  messageElement.textContent="Unable to load wallet. Please refresh the page.";
-  return;
- }
-
- if(!wallet){
-  balanceElement.textContent="₦0.00";
-  messageElement.textContent="Wallet record not found. Please contact support.";
-  return;
- }
-
- balanceElement.textContent=formatNaira(wallet.balance);
- messageElement.textContent="Your wallet balance";
-}
-
-/* LOAD WALLET TRANSACTIONS */
-async function loadTransactions(user){
- const container=document.getElementById("walletTransactions");
- container.textContent="";
-
- const loading=document.createElement("p");
- loading.className="empty-transactions";
- loading.textContent="Loading transactions...";
- container.appendChild(loading);
-
- const {data:transactions,error}=await supabase
-  .from("wallet_transactions")
-  .select("type,amount,status,reference,description,created_at")
-  .eq("user_id",user.id)
-  .order("created_at",{ascending:false})
-  .limit(10);
-
- if(error){
-  console.error("Transaction error:",error.message);
-  container.textContent="Unable to load transactions. Please refresh the page.";
-  return;
- }
-
- container.textContent="";
-
- if(!transactions||transactions.length===0){
-  const empty=document.createElement("p");
-  empty.className="empty-transactions";
-  empty.textContent="No transactions yet. Your wallet transactions will appear here.";
-  container.appendChild(empty);
-  return;
- }
-
- transactions.forEach(transaction=>{
-  const item=document.createElement("div");
-  item.className="transaction-item";
-
-  const fields=[
-   ["Type: ",transaction.type||"Transaction"],
-   ["Amount: ",formatNaira(transaction.amount)],
-   ["Status: ",transaction.status||"Unknown"],
-   ["Reference: ",transaction.reference||"Not available"],
-   ["Description: ",transaction.description||"No description"]
-  ];
-
-  fields.forEach(([label,value])=>{
-   const p=document.createElement("p");
-   p.textContent=label+value;
-   item.appendChild(p);
-  });
-
-  const date=document.createElement("p");
-  date.textContent="Date: "+formatDate(transaction.created_at);
-  item.appendChild(date);
-
-  container.appendChild(item);
- });
-}
-
-/* SUBMIT CUSTOMER FUNDING REQUEST */
-window.submitFundingRequest=async function(){
- const user=window.currentUser;
-
- if(!user){
-  showFundMessage("Please login before submitting a funding request.","red");
-  return;
- }
-
- const amount=Number(document.getElementById("fundAmount").value);
- const bank=document.getElementById("fundBank").value;
- const reference=document.getElementById("fundReference").value.trim();
-
- if(!Number.isSafeInteger(amount)||amount<100||amount>1000000){
-  showFundMessage("Enter a whole-number amount between ₦100 and ₦1,000,000.","red");
-  return;
- }
-
- if(!bankAccounts[bank]){
-  showFundMessage("Please select OPay or Moniepoint.","red");
-  return;
- }
-
- if(reference.length<3||reference.length>100){
-  showFundMessage("Enter a valid transaction reference (3 to 100 characters).","red");
-  return;
- }
-
- const button=document.getElementById("fundButton");
- button.disabled=true;
- button.textContent="Submitting...";
- showFundMessage("Submitting your funding request...");
-
- try{
-  const {error}=await supabase
-   .from("wallet_funding_requests")
-   .insert({
-    user_id:user.id,
-    amount:amount,
-    bank:bank,
-    reference:reference
-   });
-
-  if(error){
-   console.error("Funding request error:",error);
-
-   if(error.code==="23505"){
-    showFundMessage("This transaction reference has already been submitted. Please check it and try again.","red");
-   }else{
-    showFundMessage("Could not submit your request: "+error.message,"red");
-   }
-   return;
-  }
-
-  document.getElementById("fundAmount").value="";
-  document.getElementById("fundBank").value="";
-  document.getElementById("fundReference").value="";
-  document.getElementById("bankDetails").style.display="none";
-
-  showFundMessage("Your funding request was submitted successfully. It is now pending payment verification.");
-
-  await loadFundingRequests(user);
-
-  if(currentUserIsAdmin){
-   await loadAdminFundingRequests();
-  }
-
- }catch(error){
-  console.error("Funding submission error:",error);
-  showFundMessage("Something went wrong. Please try again.","red");
- }finally{
-  button.disabled=false;
-  button.textContent="Submit Funding Request";
- }
-};
-
-/* LOAD CUSTOMER FUNDING HISTORY */
-async function loadFundingRequests(user){
- const container=document.getElementById("fundingHistory");
- container.textContent="";
-
- const loading=document.createElement("p");
- loading.className="empty-transactions";
- loading.textContent="Loading funding history...";
- container.appendChild(loading);
-
- const {data:requests,error}=await supabase
-  .from("wallet_funding_requests")
-  .select("amount,bank,reference,status,created_at,admin_note")
-  .eq("user_id",user.id)
-  .order("created_at",{ascending:false})
-  .limit(20);
-
- if(error){
-  console.error("Funding history error:",error.message);
-  container.textContent="Unable to load funding history. Please refresh the page.";
-  return;
- }
-
- container.textContent="";
-
- if(!requests||requests.length===0){
-  const empty=document.createElement("p");
-  empty.className="empty-transactions";
-  empty.textContent="No funding requests yet. Your requests will appear here.";
-  container.appendChild(empty);
-  return;
- }
-
- requests.forEach(request=>{
-  const item=document.createElement("div");
-  item.className="funding-item";
-
-  const fields=[
-   ["Amount: ",formatNaira(request.amount)],
-   ["Bank: ",request.bank],
-   ["Reference: ",request.reference],
-   ["Status: ",request.status],
-   ["Date: ",formatDate(request.created_at)]
-  ];
-
-  fields.forEach(([label,value])=>{
-   const p=document.createElement("p");
-   p.textContent=label+String(value??"");
-   if(label==="Status: "){
-    const status=String(value).toLowerCase();
-    p.className=status==="approved"?"status-approved":
-     status==="rejected"?"status-rejected":"status-pending";
-   }
-   item.appendChild(p);
-  });
-
-  if(request.admin_note){
-   const note=document.createElement("p");
-   note.textContent="Admin Note: "+request.admin_note;
-   item.appendChild(note);
-  }
-
-  container.appendChild(item);
- });
-}
-
-/* DISPLAY CUSTOMER DASHBOARD */
-async function displayUser(user){
- if(!user){
-  window.currentUser=null;
-  displayedUserId=null;
-  currentUserIsAdmin=false;
-
-  document.getElementById("dashboard").style.display="none";
-  document.getElementById("authCard").style.display="block";
-  document.getElementById("adminPanel").style.display="none";
-  return;
- }
-
- window.currentUser=user;
-
- document.getElementById("authCard").style.display="none";
- document.getElementById("dashboard").style.display="block";
-
- document.getElementById("profileName").textContent=
-  user.user_metadata?.full_name||user.email||"Customer";
-
- document.getElementById("profileEmail").textContent=user.email||"";
-
- document.getElementById("profilePhone").textContent=
-  user.user_metadata?.phone||"Not provided";
-
- if(displayedUserId===user.id) return;
- displayedUserId=user.id;
-
- const profileError=await createOrUpdateProfile(user);
-
- if(profileError){
-  console.error("Could not update profile:",profileError.message);
- }
-
- const {data:profile,error:profileFetchError}=await supabase
-  .from("profiles")
-  .select("full_name,phone")
-  .eq("id",user.id)
-  .maybeSingle();
-
- if(profileFetchError){
-  console.error("Profile fetch error:",profileFetchError.message);
- }
-
- if(profile){
-  document.getElementById("profileName").textContent=
-   profile.full_name||user.email||"Customer";
-
-  document.getElementById("profilePhone").textContent=
-   profile.phone||"Not provided";
- }
-
- await Promise.all([
-  loadWallet(user),
-  loadTransactions(user),
-  loadFundingRequests(user),
-  checkAdminAccess(user)
- ]);
-}
-
-/* CUSTOMER REGISTRATION */
-window.registerCustomer=async function(){
- const name=document.getElementById("regName").value.trim();
- const phone=document.getElementById("regPhone").value.trim();
- const email=document.getElementById("regEmail").value.trim();
- const password=document.getElementById("regPassword").value;
-
- if(name.length<2){
-  showMessage("Please enter your full name.","red");
-  return;
- }
-
- if(!/^\d{11}$/.test(phone)){
-  showMessage("Enter a valid 11-digit phone number.","red");
-  return;
- }
-
- if(!email||password.length<6){
-  showMessage("Enter a valid email and a password of at least 6 characters.","red");
-  return;
- }
-
- showMessage("Creating your account...");
-
- const {data,error}=await supabase.auth.signUp({
-  email,
-  password,
-  options:{
-   data:{
-    full_name:name,
-    phone:phone
-   }
-  }
- });
-
- if(error){
-  showMessage(error.message,"red");
-  return;
- }
-
- if(data.session&&data.user){
-  await displayUser(data.user);
-  showMessage("Account created successfully!");
- }else{
-  showMessage("Registration successful! Please check your email and confirm your account before logging in.");
- }
-};
-
-/* CUSTOMER LOGIN */
-window.loginCustomer=async function(){
- const email=document.getElementById("loginEmail").value.trim();
- const password=document.getElementById("loginPassword").value;
-
- if(!email||!password){
-  showMessage("Enter your email and password.","red");
-  return;
- }
-
- showMessage("Logging in...");
-
- const {data,error}=await supabase.auth.signInWithPassword({
-  email,
-  password
- });
-
- if(error){
-  showMessage(error.message,"red");
-  return;
- }
-
- await displayUser(data.user);
- showMessage("Welcome back!");
-};
-
-/* CUSTOMER LOGOUT */
-window.logoutCustomer=async function(){
- const {error}=await supabase.auth.signOut();
-
- if(error){
-  showMessage(error.message,"red");
-  return;
- }
-
- window.currentUser=null;
- displayedUserId=null;
- currentUserIsAdmin=false;
-
- document.getElementById("dashboard").style.display="none";
- document.getElementById("authCard").style.display="block";
- document.getElementById("adminPanel").style.display="none";
-
- document.getElementById("walletBalance").textContent="₦0.00";
- document.getElementById("walletMessage").textContent="Please login to view your wallet.";
- document.getElementById("walletTransactions").textContent="";
- document.getElementById("fundingHistory").textContent="";
- document.getElementById("adminFundingList").textContent="";
- document.getElementById("fundMessage").textContent="";
- document.getElementById("adminMessage").textContent="";
- document.getElementById("fundAmount").value="";
- document.getElementById("fundBank").value="";
- document.getElementById("fundReference").value="";
- document.getElementById("bankDetails").style.display="none";
-
- window.showLogin();
- showMessage("You have logged out successfully.");
-};
-
-/* CHECK EXISTING LOGIN SESSION */
-supabase.auth.onAuthStateChange((event,session)=>{
- if(event==="SIGNED_IN"&&session?.user){
-  setTimeout(()=>displayUser(session.user),0);
- }
-
- if(event==="SIGNED_OUT"){
-  window.currentUser=null;
-  displayedUserId=null;
-  currentUserIsAdmin=false;
-
-  document.getElementById("dashboard").style.display="none";
-  document.getElementById("authCard").style.display="block";
-  document.getElementById("adminPanel").style.display="none";
- }
-});
-
-const {data:{session},error:sessionError}=await supabase.auth.getSession();
-
-if(sessionError){
- console.error("Session error:",sessionError.message);
-}
-
-if(session?.user){
- await displayUser(session.user);
-}
+let displayedUserId=null,currentUserIsAdmin=false;
+const $=id=>document.getElementById(id);
+const bankAccounts={OPay:"6458790287",Moniepoint:"8136438501"};
+function msg(id,text,color="#087c45"){$(id).textContent=text;$(id).style.color=color}
+function naira(v){const n=Number(v);return "₦"+(Number.isFinite(n)?n:0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function date(v){const d=new Date(v);return isNaN(d)?"Not available":d.toLocaleString("en-NG")}
+function node(tag,text,cls){const e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;return e}
+function statusClass(s){return s==="approved"?"approved":s==="rejected"?"rejected":"pending"}
+window.showLogin=()=>{$("registerForm").style.display="none";$("loginForm").style.display="block";msg("authMessage","")};
+window.showRegister=()=>{$("registerForm").style.display="block";$("loginForm").style.display="none";msg("authMessage","")};
+$("fundBank").addEventListener("change",()=>{const b=$("fundBank").value;if(!bankAccounts[b]){$("bankDetails").style.display="none";return}$("bankName").textContent=b;$("bankAccount").textContent=bankAccounts[b];$("bankDetails").style.display="block"});
+async function createProfile(u){const m=u.user_metadata||{};const {error}=await supabase.from("profiles").upsert({id:u.id,full_name:m.full_name||u.email,phone:m.phone||null},{onConflict:"id"});if(error)console.error("Profile upsert:",error.message)}
+async function checkAdmin(u){$("adminPanel").style.display="none";currentUserIsAdmin=false;if(!u)return false;const {data,error}=await supabase.from("admin_users").select("user_id").eq("user_id",u.id).maybeSingle();if(error){console.error("Admin check:",error.message);return false}if(!data)return false;currentUserIsAdmin=true;$("adminPanel").style.display="block";$("adminEmail").textContent=u.email||"Admin";await Promise.all([loadAdminFundingRequests(),loadTestFundingRequests()]);return true}
+async function loadWallet(u){$("walletBalance").textContent="Loading...";const {data,error}=await supabase.from("wallets").select("balance").eq("user_id",u.id).maybeSingle();if(error){$("walletBalance").textContent="Unavailable";$("walletMessage").textContent="Unable to load wallet: "+error.message;return}if(!data){$("walletBalance").textContent="₦0.00";$("walletMessage").textContent="Wallet record not found. Contact support.";return}$("walletBalance").textContent=naira(data.balance);$("walletMessage").textContent="Your wallet balance"}
+async function loadTransactions(u){const box=$("walletTransactions");box.textContent="Loading...";const {data,error}=await supabase.from("wallet_transactions").select("type,amount,status,reference,description,created_at").eq("user_id",u.id).order("created_at",{ascending:false}).limit(10);box.textContent="";if(error){box.append(node("p","Unable to load transactions: "+error.message,"empty"));return}if(!data?.length){box.append(node("p","No transactions yet.","empty"));return}data.forEach(t=>{const x=node("div","","item");[["Type",t.type],["Amount",naira(t.amount)],["Status",t.status],["Reference",t.reference],["Description",t.description],["Date",date(t.created_at)]].forEach(([k,v])=>x.append(node("p",k+": "+(v||"Not available"))));box.append(x)})}
+async function loadFundingHistory(u){const box=$("fundingHistory");box.textContent="Loading...";const {data,error}=await supabase.from("wallet_funding_requests").select("amount,bank,reference,status,created_at,admin_note").eq("user_id",u.id).order("created_at",{ascending:false}).limit(20);box.textContent="";if(error){box.append(node("p","Unable to load funding history: "+error.message,"empty"));return}if(!data?.length){box.append(node("p","No funding requests yet.","empty"));return}data.forEach(r=>{const x=node("div","","item");[["Amount",naira(r.amount)],["Bank",r.bank],["Reference",r.reference],["Status",r.status],["Date",date(r.created_at)],["Admin note",r.admin_note]].forEach(([k,v])=>{if(v)x.append(node("p",k+": "+v,k==="Status"?statusClass(r.status):""))});box.append(x)})}
+function renderAdminRequest(box,r,isTest){const x=node("div","","item");x.append(node("h4",isTest?"TEST Funding Request":"Funding Request"));[["Request ID",r.id],["Customer User ID",r.user_id],["Amount",naira(r.amount)],["Bank",r.bank],["Transaction Reference",r.reference],["Submitted",date(r.created_at)]].forEach(([k,v])=>x.append(node("p",k+": "+(v??"Not available"))));x.append(node("p","Status: "+r.status,statusClass(r.status)));if(r.admin_note)x.append(node("p","Admin Note: "+r.admin_note));if(r.status==="pending"){const actions=node("div","","actions");const a=node("button","Approve"),b=node("button","Reject","danger");a.onclick=()=>reviewRequest(r.id,"approve",isTest);b.onclick=()=>reviewRequest(r.id,"reject",isTest);actions.append(a,b);x.append(actions)}box.append(x)}
+async function loadRequestList({table,boxId,messageId,buttonId,isTest}){const box=$(boxId),btn=$(buttonId);if(!window.currentUser||!currentUserIsAdmin){box.textContent="Admin access required.";return}btn.disabled=true;btn.textContent="Loading...";box.textContent="Loading requests...";try{const {data,error}=await supabase.from(table).select("id,user_id,amount,bank,reference,status,created_at,admin_note").order("created_at",{ascending:false}).limit(100);box.textContent="";if(error){console.error(table+" load:",error);box.append(node("p","Unable to load "+(isTest?"test":"real")+" requests: "+error.message,"empty"));msg(messageId,"Database returned an error. Check table name and SELECT policy.","red");return}if(!data?.length){box.append(node("p","No requests found.","empty"));msg(messageId,"Loaded successfully. No requests found.");return}data.forEach(r=>renderAdminRequest(box,r,isTest));msg(messageId,"Loaded "+data.length+" request(s); pending: "+data.filter(r=>r.status==="pending").length+".")}catch(e){console.error(e);box.textContent="Unexpected error loading requests.";msg(messageId,e.message,"red")}finally{btn.disabled=false;btn.textContent=isTest?"Refresh Test Requests":"Refresh Real Requests"}}
+window.loadAdminFundingRequests=()=>loadRequestList({table:"wallet_funding_requests",boxId:"adminFundingList",messageId:"adminMessage",buttonId:"refreshAdminButton",isTest:false});
+window.loadTestFundingRequests=()=>loadRequestList({table:"wallet_funding_requests_test",boxId:"testFundingList",messageId:"testAdminMessage",buttonId:"refreshTestButton",isTest:true});
+async function reviewRequest(id,decision,isTest){if(!window.currentUser||!currentUserIsAdmin){msg(isTest?"testAdminMessage":"adminMessage","Admin access required.","red");return}const isApproved=decision==="approve";if(!confirm(isTest?"TEST ONLY: "+decision.toUpperCase()+" this test request?":"Confirm "+decision.toUpperCase()+"? Verify the money has arrived before approving a real request."))return;let note=prompt("Admin note (optional):");if(note===null)return;note=note.trim();if(note.length>500){alert("Note must be 500 characters or fewer.");return}const messageId=isTest?"testAdminMessage":"adminMessage";msg(messageId,"Processing...");try{const functionName=isTest?"admin_review_funding_test":"admin_review_funding";const {data,error}=await supabase.rpc(functionName,{p_request_id:id,p_decision:decision,p_admin_note:note||null});if(error){console.error(functionName,error);msg(messageId,"Review failed: "+error.message,"red");return}if(!data||data.success!==true){msg(messageId,"Database did not confirm the action: "+(data?.message||JSON.stringify(data)),"red");return}msg(messageId,(isTest?"TEST request ":"Funding request ")+decision+" action completed. Please refresh and verify its status.");if(isTest)await loadTestFundingRequests();else{await loadAdminFundingRequests();if(window.currentUser)await loadFundingHistory(window.currentUser);if(window.currentUser)await loadWallet(window.currentUser);if(window.currentUser)await loadTransactions(window.currentUser)}}catch(e){console.error(e);msg(messageId,"Unexpected error: "+e.message,"red")}}
+window.submitFundingRequest=async()=>{const u=window.currentUser;if(!u){msg("fundMessage","Please login first.","red");return}const amount=Number($("fundAmount").value),bank=$("fundBank").value,reference=$("fundReference").value.trim();if(!Number.isSafeInteger(amount)||amount<100||amount>1000000){msg("fundMessage","Enter an amount between ₦100 and ₦1,000,000.","red");return}if(!bankAccounts[bank]){msg("fundMessage","Select OPay or Moniepoint.","red");return}if(reference.length<3||reference.length>100){msg("fundMessage","Reference must be 3–100 characters.","red");return}const btn=$("fundButton");btn.disabled=true;btn.textContent="Submitting...";try{const {error}=await supabase.from("wallet_funding_requests").insert({user_id:u.id,amount,bank,reference});if(error){msg("fundMessage",error.code==="23505"?"This reference has already been submitted.":error.message,"red");return}$("fundAmount").value="";$("fundBank").value="";$("fundReference").value="";$("bankDetails").style.display="none";msg("fundMessage","Request submitted. It is pending verification.");await loadFundingHistory(u);if(currentUserIsAdmin)await loadAdminFundingRequests()}catch(e){msg("fundMessage",e.message,"red")}finally{btn.disabled=false;btn.textContent="Submit Funding Request"}};
+async function displayUser(u){if(!u){window.currentUser=null;displayedUserId=null;currentUserIsAdmin=false;$("dashboard").style.display="none";$("authCard").style.display="block";$("adminPanel").style.display="none";return}window.currentUser=u;$("authCard").style.display="none";$("dashboard").style.display="block";$("profileName").textContent=u.user_metadata?.full_name||u.email||"Customer";$("profileEmail").textContent=u.email||"";$("profilePhone").textContent=u.user_metadata?.phone||"Not provided";if(displayedUserId===u.id)return;displayedUserId=u.id;await createProfile(u);const {data:profile,error}=await supabase.from("profiles").select("full_name,phone").eq("id",u.id).maybeSingle();if(error)console.error("Profile fetch:",error.message);if(profile){$("profileName").textContent=profile.full_name||u.email;$("profilePhone").textContent=profile.phone||"Not provided"}await Promise.all([loadWallet(u),loadTransactions(u),loadFundingHistory(u),checkAdmin(u)])}
+window.registerCustomer=async()=>{const name=$("regName").value.trim(),phone=$("regPhone").value.trim(),email=$("regEmail").value.trim(),password=$("regPassword").value;if(name.length<2||!validPhone(phone)||!email||password.length<6){msg("authMessage","Enter your name, valid 11-digit phone, email and password (minimum 6 characters).","red");return}msg("authMessage","Creating account...");const {data,error}=await supabase.auth.signUp({email,password,options:{data:{full_name:name,phone}}});if(error){msg("authMessage",error.message,"red");return}if(data.session&&data.user){await displayUser(data.user);msg("authMessage","Account created successfully.")}else msg("authMessage","Registration successful. Log in to continue (check email if confirmation is enabled).")};
+window.loginCustomer=async()=>{const email=$("loginEmail").value.trim(),password=$("loginPassword").value;if(!email||!password){msg("authMessage","Enter email and password.","red");return}msg("authMessage","Logging in...");const {data,error}=await supabase.auth.signInWithPassword({email,password});if(error){msg("authMessage",error.message,"red");return}await displayUser(data.user);msg("authMessage","Welcome back!")};
+window.logoutCustomer=async()=>{const {error}=await supabase.auth.signOut();if(error){msg("authMessage",error.message,"red");return}await displayUser(null);$("walletBalance").textContent="₦0.00";$("walletMessage").textContent="Please login to view your wallet.";["walletTransactions","fundingHistory","adminFundingList","testFundingList"].forEach(id=>$(id).textContent="");$("fundMessage").textContent="";$("adminMessage").textContent="";$("testAdminMessage").textContent="";window.showLogin();msg("authMessage","You have logged out.")};
+supabase.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_IN"&&session?.user)setTimeout(()=>displayUser(session.user),0);if(event==="SIGNED_OUT")displayUser(null)});
+const {data:{session},error:sessionError}=await supabase.auth.getSession();if(sessionError)console.error("Session:",sessionError.message);if(session?.user)await displayUser(session.user);
 </script>
-
 </body>
 </html>

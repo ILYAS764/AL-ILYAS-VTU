@@ -185,7 +185,7 @@ function renderAdminRequest(box,r,isTest){const x=node("div","","item");x.append
 async function loadRequestList({table,columns,boxId,messageId,buttonId,isTest}){const box=$(boxId),btn=$(buttonId);if(!window.currentUser||!currentUserIsAdmin){box.textContent="Admin access required.";return}btn.disabled=true;btn.textContent="Loading...";box.textContent="Loading requests...";try{const {data,error}=await supabase.from(table).select(columns).order("created_at",{ascending:false}).limit(100);box.textContent="";if(error){console.error(table+" load:",error);box.append(node("p","Unable to load "+(isTest?"test":"real")+" requests: "+error.message,"empty"));msg(messageId,"Database error: "+error.message,"red");return}if(!data?.length){box.append(node("p","No requests found.","empty"));msg(messageId,"Loaded successfully. No requests found.");return}data.forEach(r=>renderAdminRequest(box,r,isTest));msg(messageId,"Loaded "+data.length+" request(s); pending: "+data.filter(r=>r.status==="pending").length+".")}catch(e){console.error(e);box.textContent="Unexpected error loading requests.";msg(messageId,e.message,"red")}finally{btn.disabled=false;btn.textContent=isTest?"Refresh Test Requests":"Refresh Real Requests"}}
 /* Correct test table name and columns: the test table has no bank column. */
 window.loadAdminFundingRequests=()=>loadRequestList({
-  table:"wallet_funding_requests",
+  table:"wallet_funding_test_requests",
   columns:"id,user_id,amount,bank,reference,status,created_at,admin_note",
   boxId:"adminFundingList",
   messageId:"adminMessage",

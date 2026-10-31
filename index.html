@@ -25,6 +25,44 @@ button:hover{background:#056536}
 footer{background:#073d27;color:white;text-align:center;padding:25px}
 #dashboard{display:none}
 .message{font-size:14px;line-height:1.6;margin-top:12px;overflow-wrap:anywhere}
+
+/* WALLET DESIGN */
+.wallet-box{
+ background:linear-gradient(135deg,#087c45,#13ad68);
+ color:white;
+ padding:22px;
+ border-radius:12px;
+ margin-top:22px;
+}
+.wallet-box h3{margin-bottom:15px}
+.wallet-box h2{
+ color:white;
+ font-size:30px;
+ margin:8px 0;
+}
+.wallet-box p{font-size:14px}
+.wallet-note{
+ font-size:12px!important;
+ margin-top:12px;
+ opacity:.9;
+}
+.transaction-item{
+ border:1px solid #e5e7eb;
+ border-radius:8px;
+ padding:13px;
+ margin-top:10px;
+ line-height:1.7;
+ overflow-wrap:anywhere;
+}
+.transaction-item p{font-size:13px}
+.transaction-status{font-weight:bold}
+.empty-transactions{
+ background:#f3f7f5;
+ padding:15px;
+ border-radius:8px;
+ margin-top:12px;
+ font-size:14px;
+}
 </style>
 </head>
 
@@ -92,9 +130,31 @@ Already have an account?
 
 <section class="card" id="dashboard">
 <h2>My Dashboard</h2>
+
 <p><b>Name:</b> <span id="profileName"></span></p>
 <p style="margin-top:10px"><b>Email:</b> <span id="profileEmail"></span></p>
 <p style="margin-top:10px"><b>Phone:</b> <span id="profilePhone"></span></p>
+
+<!-- CUSTOMER WALLET -->
+
+<div class="wallet-box">
+<h3>💰 My Wallet</h3>
+<p>Available Balance</p>
+<h2 id="walletBalance">₦0.00</h2>
+<p id="walletMessage" class="wallet-note">
+Loading wallet...
+</p>
+</div>
+
+<!-- TRANSACTION HISTORY -->
+
+<div style="margin-top:25px">
+<h3 style="color:#087c45">📋 Recent Transactions</h3>
+<div id="walletTransactions">
+<p class="empty-transactions">Loading transactions...</p>
+</div>
+</div>
+
 <button class="secondary" onclick="logoutCustomer()">Logout</button>
 </section>
 
@@ -218,7 +278,7 @@ Anyone visiting this website can access these settings.
 <p>© 2026 AL-ILYAS VTU</p>
 </footer>
 
-<!-- EXISTING DATA AND AIRTIME FUNCTIONS -->
+<!-- DATA AND AIRTIME FUNCTIONS -->
 
 <script>
 const defaultPrices = {
@@ -447,13 +507,13 @@ restoreSettings();
 loadAdminSettings();
 </script>
 
-<!-- SUPABASE AUTHENTICATION -->
+<!-- SUPABASE AUTHENTICATION AND WALLET -->
 
 <script type="module">
 import { createClient } from
 "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-// REPLACE THESE TWO VALUES WITH YOUR SUPABASE DETAILS
+/* PUT YOUR REAL SUPABASE DETAILS HERE */
 const SUPABASE_URL = "https://bfmsbdgjdaiqmypcuxce.supabase.co";
 const SUPABASE_KEY = "sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
 
@@ -468,6 +528,16 @@ function showMessage(message,color="#087c45"){
  authMessage.style.color=color;
 }
 
+function formatNaira(amount){
+ const value=Number(amount);
+ if(!Number.isFinite(value)) return "₦0.00";
+
+ return "₦"+value.toLocaleString("en-NG",{
+  minimumFractionDigits:2,
+  maximumFractionDigits:2
+ });
+}
+
 window.showLogin=function(){
  document.getElementById("registerForm").style.display="none";
  document.getElementById("loginForm").style.display="block";
@@ -480,8 +550,10 @@ window.showRegister=function(){
  showMessage("");
 };
 
+/* CREATE OR UPDATE CUSTOMER PROFILE */
+
 async function createOrUpdateProfile(user){
- if(!user) return;
+ if(!user) return null;
 
  const metadata=user.user_metadata||{};
 
@@ -497,39 +569,179 @@ async function createOrUpdateProfile(user){
 
  if(error){
   console.error("Profile error:",error.message);
-  showMessage("Login successful, but profile could not load: "+error.message,"#b45309");
+  return error;
  }
+
+ return null;
 }
 
-async function displayUser(user){
- window.currentUser=user;
+/* LOAD WALLET BALANCE */
 
+async function loadWallet(user){
+ const balanceElement=document.getElementById("walletBalance");
+ const messageElement=document.getElementById("walletMessage");
+
+ balanceElement.textContent="Loading...";
+ messageElement.textContent="Connecting to your wallet...";
+
+ const {data:wallet,error}=await supabase
+  .from("wallets")
+  .select("balance")
+  .eq("user_id",user.id)
+  .maybeSingle();
+
+ if(error){
+  console.error("Wallet error:",error.message);
+  balanceElement.textContent="Unavailable";
+  messageElement.textContent="Unable to load wallet. Please refresh the page.";
+  return;
+ }
+
+ if(!wallet){
+  balanceElement.textContent="₦0.00";
+  messageElement.textContent="Wallet record not found. Please contact support.";
+  return;
+ }
+
+ balanceElement.textContent=formatNaira(wallet.balance);
+ messageElement.textContent="Your wallet balance";
+}
+
+/* LOAD CUSTOMER TRANSACTIONS */
+
+async function loadTransactions(user){
+ const container=document.getElementById("walletTransactions");
+
+ container.textContent="";
+
+ const loading=document.createElement("p");
+ loading.className="empty-transactions";
+ loading.textContent="Loading transactions...";
+ container.appendChild(loading);
+
+ const {data:transactions,error}=await supabase
+  .from("wallet_transactions")
+  .select("type,amount,status,reference,description,created_at")
+  .eq("user_id",user.id)
+  .order("created_at",{ascending:false})
+  .limit(10);
+
+ if(error){
+  console.error("Transaction error:",error.message);
+  container.textContent="Unable to load transactions. Please refresh the page.";
+  return;
+ }
+
+ container.textContent="";
+
+ if(!transactions||transactions.length===0){
+  const empty=document.createElement("p");
+  empty.className="empty-transactions";
+  empty.textContent="No transactions yet. Your wallet transactions will appear here.";
+  container.appendChild(empty);
+  return;
+ }
+
+ transactions.forEach(transaction=>{
+  const item=document.createElement("div");
+  item.className="transaction-item";
+
+  const type=document.createElement("p");
+  type.textContent="Type: "+(transaction.type||"Transaction");
+
+  const amount=document.createElement("p");
+  amount.textContent="Amount: "+formatNaira(transaction.amount);
+
+  const status=document.createElement("p");
+  status.className="transaction-status";
+  status.textContent="Status: "+(transaction.status||"Unknown");
+
+  const reference=document.createElement("p");
+  reference.textContent="Reference: "+(transaction.reference||"Not available");
+
+  const description=document.createElement("p");
+  description.textContent="Description: "+(transaction.description||"No description");
+
+  const date=document.createElement("p");
+  const parsedDate=new Date(transaction.created_at);
+
+  date.textContent="Date: "+
+   (Number.isNaN(parsedDate.getTime())
+    ?"Not available"
+    :parsedDate.toLocaleString("en-NG"));
+
+  item.append(type,amount,status,reference,description,date);
+  container.appendChild(item);
+ });
+}
+
+/* DISPLAY CUSTOMER DASHBOARD */
+
+let displayedUserId=null;
+
+async function displayUser(user){
  if(!user){
+  window.currentUser=null;
+  displayedUserId=null;
+
   document.getElementById("dashboard").style.display="none";
   document.getElementById("authCard").style.display="block";
   return;
  }
 
- await createOrUpdateProfile(user);
-
- const {data:profile,error}=await supabase
-  .from("profiles")
-  .select("full_name,phone")
-  .eq("id",user.id)
-  .maybeSingle();
+ window.currentUser=user;
 
  document.getElementById("authCard").style.display="none";
  document.getElementById("dashboard").style.display="block";
 
  document.getElementById("profileName").textContent=
-  profile?.full_name||user.user_metadata?.full_name||"Customer";
+  user.user_metadata?.full_name||user.email||"Customer";
 
  document.getElementById("profileEmail").textContent=user.email||"";
- document.getElementById("profilePhone").textContent=
-  profile?.phone||user.user_metadata?.phone||"Not provided";
 
- if(error) console.error(error.message);
+ document.getElementById("profilePhone").textContent=
+  user.user_metadata?.phone||"Not provided";
+
+ /* Prevent duplicate loading for the same user */
+
+ if(displayedUserId===user.id) return;
+ displayedUserId=user.id;
+
+ const profileError=await createOrUpdateProfile(user);
+
+ if(profileError){
+  console.error("Could not update profile:",profileError.message);
+ }
+
+ /* Get profile information */
+
+ const {data:profile,error:profileFetchError}=await supabase
+  .from("profiles")
+  .select("full_name,phone")
+  .eq("id",user.id)
+  .maybeSingle();
+
+ if(profileFetchError){
+  console.error("Profile fetch error:",profileFetchError.message);
+ }
+
+ if(profile){
+  document.getElementById("profileName").textContent=
+   profile.full_name||user.email||"Customer";
+
+  document.getElementById("profilePhone").textContent=
+   profile.phone||"Not provided";
+ }
+
+ /* Load wallet and transaction history */
+
+ await Promise.all([
+  loadWallet(user),
+  loadTransactions(user)
+ ]);
 }
+
+/* CUSTOMER REGISTRATION */
 
 window.registerCustomer=async function(){
  const name=document.getElementById("regName").value.trim();
@@ -570,13 +782,15 @@ window.registerCustomer=async function(){
   return;
  }
 
- if(data.session){
+ if(data.session&&data.user){
   await displayUser(data.user);
   showMessage("Account created successfully!");
  }else{
   showMessage("Registration successful! Please check your email and confirm your account before logging in.");
  }
 };
+
+/* CUSTOMER LOGIN */
 
 window.loginCustomer=async function(){
  const email=document.getElementById("loginEmail").value.trim();
@@ -603,6 +817,8 @@ window.loginCustomer=async function(){
  showMessage("Welcome back!");
 };
 
+/* CUSTOMER LOGOUT */
+
 window.logoutCustomer=async function(){
  const {error}=await supabase.auth.signOut();
 
@@ -612,11 +828,20 @@ window.logoutCustomer=async function(){
  }
 
  window.currentUser=null;
+ displayedUserId=null;
+
  document.getElementById("dashboard").style.display="none";
  document.getElementById("authCard").style.display="block";
+
+ document.getElementById("walletBalance").textContent="₦0.00";
+ document.getElementById("walletMessage").textContent="Please login to view your wallet.";
+ document.getElementById("walletTransactions").textContent="";
+
  window.showLogin();
  showMessage("You have logged out successfully.");
 };
+
+/* CHECK EXISTING LOGIN SESSION */
 
 supabase.auth.onAuthStateChange((event,session)=>{
  if(event==="SIGNED_IN"&&session?.user){
@@ -625,12 +850,18 @@ supabase.auth.onAuthStateChange((event,session)=>{
 
  if(event==="SIGNED_OUT"){
   window.currentUser=null;
+  displayedUserId=null;
+
   document.getElementById("dashboard").style.display="none";
   document.getElementById("authCard").style.display="block";
  }
 });
 
-const {data:{session}}=await supabase.auth.getSession();
+const {data:{session},error:sessionError}=await supabase.auth.getSession();
+
+if(sessionError){
+ console.error("Session error:",sessionError.message);
+}
 
 if(session?.user){
  await displayUser(session.user);

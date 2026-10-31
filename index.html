@@ -7,122 +7,31 @@
 <title>AL-ILYAS VTU</title>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-}
-
-body {
-  background: #f3f7f5;
-  color: #183328;
-}
-
-header {
-  background: #087c45;
-  color: white;
-  padding: 20px;
-  text-align: center;
-}
-
-.hero {
-  background: linear-gradient(135deg,#087c45,#13ad68);
-  color: white;
-  text-align: center;
-  padding: 35px 15px;
-}
-
-.container {
-  max-width: 600px;
-  margin: 25px auto;
-  padding: 15px;
-}
-
-.card {
-  background: white;
-  padding: 22px;
-  border-radius: 13px;
-  margin-bottom: 20px;
-  box-shadow: 0 3px 12px #0001;
-}
-
-h2 {
-  color: #087c45;
-  margin-bottom: 17px;
-}
-
-label {
-  display: block;
-  margin: 14px 0 7px;
-  font-weight: bold;
-  font-size: 14px;
-}
-
-input, select {
-  width: 100%;
-  padding: 13px;
-  border: 1px solid #ddd;
-  border-radius: 7px;
-  font-size: 15px;
-  background: white;
-}
-
-button {
-  width: 100%;
-  padding: 14px;
-  margin-top: 18px;
-  border: none;
-  border-radius: 7px;
-  background: #087c45;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #056536;
-}
-
-.summary {
-  display: none;
-  background: #e9f8ef;
-  padding: 16px;
-  border-radius: 9px;
-  margin-top: 18px;
-  line-height: 2;
-  overflow-wrap: anywhere;
-}
-
-.notice {
-  background: #fff5df;
-  padding: 12px;
-  border-radius: 7px;
-  margin-top: 13px;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.admin-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-footer {
-  background: #073d27;
-  color: white;
-  text-align: center;
-  padding: 25px;
-}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#f3f7f5;color:#183328}
+header{background:#087c45;color:white;padding:20px;text-align:center}
+.hero{background:linear-gradient(135deg,#087c45,#13ad68);color:white;text-align:center;padding:35px 15px}
+.container{max-width:600px;margin:25px auto;padding:15px}
+.card{background:white;padding:22px;border-radius:13px;margin-bottom:20px;box-shadow:0 3px 12px #0001}
+h2{color:#087c45;margin-bottom:17px}
+label{display:block;margin:14px 0 7px;font-weight:bold;font-size:14px}
+input,select{width:100%;padding:13px;border:1px solid #ddd;border-radius:7px;font-size:15px;background:white}
+button{width:100%;padding:14px;margin-top:18px;border:none;border-radius:7px;background:#087c45;color:white;font-size:16px;font-weight:bold;cursor:pointer}
+button:hover{background:#056536}
+.secondary{background:#555}
+.summary{display:none;background:#e9f8ef;padding:16px;border-radius:9px;margin-top:18px;line-height:2;overflow-wrap:anywhere}
+.notice{background:#fff5df;padding:12px;border-radius:7px;margin-top:13px;font-size:13px;line-height:1.6}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+footer{background:#073d27;color:white;text-align:center;padding:25px}
+#dashboard{display:none}
+.message{font-size:14px;line-height:1.6;margin-top:12px;overflow-wrap:anywhere}
 </style>
 </head>
 
 <body>
 
 <header>
-<h2 style="color:white;margin:0;">AL-ILYAS VTU</h2>
+<h2 style="color:white;margin:0">AL-ILYAS VTU</h2>
 <p>Your Trusted Data & Airtime Platform</p>
 </header>
 
@@ -132,6 +41,62 @@ footer {
 </section>
 
 <main class="container">
+
+<!-- CUSTOMER AUTHENTICATION -->
+
+<section class="card" id="authCard">
+<h2>👤 Customer Account</h2>
+
+<div id="registerForm">
+<h3>Create Account</h3>
+
+<label>Full Name</label>
+<input id="regName" type="text" placeholder="Enter your full name">
+
+<label>Phone Number</label>
+<input id="regPhone" type="tel" maxlength="11"
+inputmode="numeric" placeholder="08012345678">
+
+<label>Email Address</label>
+<input id="regEmail" type="email" placeholder="Enter your email">
+
+<label>Password</label>
+<input id="regPassword" type="password"
+placeholder="Create a password">
+
+<button onclick="registerCustomer()">Create Account</button>
+
+<p style="margin-top:15px;text-align:center">
+Already have an account?
+</p>
+<button class="secondary" onclick="showLogin()">Login</button>
+</div>
+
+<div id="loginForm" style="display:none">
+<h3>Customer Login</h3>
+
+<label>Email Address</label>
+<input id="loginEmail" type="email" placeholder="Enter your email">
+
+<label>Password</label>
+<input id="loginPassword" type="password" placeholder="Enter your password">
+
+<button onclick="loginCustomer()">Login</button>
+<button class="secondary" onclick="showRegister()">Create New Account</button>
+</div>
+
+<p class="message" id="authMessage" aria-live="polite"></p>
+</section>
+
+<!-- CUSTOMER DASHBOARD -->
+
+<section class="card" id="dashboard">
+<h2>My Dashboard</h2>
+<p><b>Name:</b> <span id="profileName"></span></p>
+<p style="margin-top:10px"><b>Email:</b> <span id="profileEmail"></span></p>
+<p style="margin-top:10px"><b>Phone:</b> <span id="profilePhone"></span></p>
+<button class="secondary" onclick="logoutCustomer()">Logout</button>
+</section>
 
 <!-- DATA PURCHASE -->
 
@@ -148,21 +113,19 @@ footer {
 </select>
 
 <label>Phone Number</label>
-<input id="dataPhone" type="tel"
-maxlength="11" inputmode="numeric"
-placeholder="Enter phone number">
+<input id="dataPhone" type="tel" maxlength="11"
+inputmode="numeric" placeholder="Enter phone number">
 
 <label>Data Plan</label>
 <select id="dataPlan">
 <option value="">Select Data Plan</option>
 </select>
 
-<p style="margin-top:12px;font-weight:bold;">
+<p style="margin-top:12px;font-weight:bold">
 Price: <span id="dataPrice">₦0</span>
 </p>
 
 <button onclick="buyData()">Continue Data Order</button>
-
 <div class="summary" id="dataSummary"></div>
 </section>
 
@@ -181,37 +144,31 @@ Price: <span id="dataPrice">₦0</span>
 </select>
 
 <label>Phone Number</label>
-<input id="airPhone" type="tel"
-maxlength="11" inputmode="numeric"
-placeholder="Enter phone number">
+<input id="airPhone" type="tel" maxlength="11"
+inputmode="numeric" placeholder="Enter phone number">
 
 <label>Airtime Amount (₦)</label>
-<input id="airAmount" type="number"
-min="50" max="100000"
+<input id="airAmount" type="number" min="50" max="100000"
 placeholder="Enter amount">
 
 <label>Discount (%)</label>
-<input id="discount" type="number"
-min="0" max="100" value="2">
+<input id="discount" type="number" min="0" max="100" value="2">
 
-<div style="background:#e9f8ef;padding:15px;
-margin-top:15px;border-radius:8px;line-height:2;">
+<div style="background:#e9f8ef;padding:15px;margin-top:15px;border-radius:8px;line-height:2">
 <p>Discount: <b id="discountValue">₦0</b></p>
 <p>Customer Pays: <b id="payable">₦0</b></p>
 </div>
 
 <button onclick="buyAirtime()">Continue Airtime Order</button>
-
 <div class="summary" id="airSummary"></div>
-
 </section>
 
-<!-- ADMIN PRICE SETTINGS -->
+<!-- ADMIN DEMO SETTINGS -->
 
 <section class="card">
 <h2>⚙️ Admin Price Settings</h2>
 
-<p style="font-size:13px;line-height:1.6;">
+<p style="font-size:13px;line-height:1.6">
 Demo settings for editing data prices and airtime discount.
 </p>
 
@@ -243,14 +200,13 @@ Demo settings for editing data prices and airtime discount.
 </div>
 
 <label>Airtime Discount (%)</label>
-<input id="adminDiscount" type="number"
-min="0" max="100">
+<input id="adminDiscount" type="number" min="0" max="100">
 
 <button onclick="saveSettings()">Save Settings</button>
 
 <div class="notice">
 This is a frontend demonstration, not a secure admin panel.
-Settings are saved only in this browser.
+Anyone visiting this website can access these settings.
 </div>
 </section>
 
@@ -262,261 +218,423 @@ Settings are saved only in this browser.
 <p>© 2026 AL-ILYAS VTU</p>
 </footer>
 
+<!-- EXISTING DATA AND AIRTIME FUNCTIONS -->
+
 <script>
-
-// DEMO DATA PRICES
-
 const defaultPrices = {
-MTN:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
-Airtel:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
-Glo:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
-"9mobile":{"500MB":150,"1GB":300,"2GB":600,"5GB":1500}
+ MTN:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
+ Airtel:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
+ Glo:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
+ "9mobile":{"500MB":150,"1GB":300,"2GB":600,"5GB":1500}
 };
 
-let prices = JSON.parse(
-JSON.stringify(defaultPrices)
-);
+let prices=JSON.parse(JSON.stringify(defaultPrices));
+let airtimeDiscount=2;
 
-let airtimeDiscount = 2;
+function updateDataPlans(){
+ const net=document.getElementById("dataNetwork").value;
+ const plan=document.getElementById("dataPlan");
+ plan.innerHTML='<option value="">Select Data Plan</option>';
 
-function updateDataPlans() {
-const net = document.getElementById("dataNetwork").value;
-const plan = document.getElementById("dataPlan");
+ if(!net){
+  document.getElementById("dataPrice").textContent="₦0";
+  return;
+ }
 
-plan.innerHTML = '<option value="">Select Data Plan</option>';
-
-if(!net) {
-document.getElementById("dataPrice").textContent="₦0";
-return;
+ Object.keys(prices[net]).forEach(size=>{
+  const option=document.createElement("option");
+  option.value=size;
+  option.textContent=size;
+  plan.appendChild(option);
+ });
+ updateDataPrice();
 }
 
-Object.keys(prices[net]).forEach(size=>{
-let option=document.createElement("option");
-option.value=size;
-option.textContent=size;
-plan.appendChild(option);
-});
-
-updateDataPrice();
+function updateDataPrice(){
+ const net=document.getElementById("dataNetwork").value;
+ const size=document.getElementById("dataPlan").value;
+ document.getElementById("dataPrice").textContent=
+ net&&size?"₦"+prices[net][size].toLocaleString("en-NG"):"₦0";
 }
 
-function updateDataPrice() {
-const net=document.getElementById("dataNetwork").value;
-const size=document.getElementById("dataPlan").value;
+document.getElementById("dataNetwork").addEventListener("change",updateDataPlans);
+document.getElementById("dataPlan").addEventListener("change",updateDataPrice);
 
-document.getElementById("dataPrice").textContent =
-net && size ? "₦"+prices[net][size].toLocaleString("en-NG") : "₦0";
+function generateOrderID(){
+ return "ALIYAS"+Date.now();
 }
 
-document.getElementById("dataNetwork")
-.addEventListener("change",updateDataPlans);
-
-document.getElementById("dataPlan")
-.addEventListener("change",updateDataPrice);
-
-// ORDER ID
-
-function generateOrderID() {
-return "ALIYAS"+Date.now();
+function validPhone(phone){
+ return /^\d{11}$/.test(phone);
 }
 
-function validPhone(phone) {
-return /^\d{11}$/.test(phone);
+function buyData(){
+ if(!window.currentUser){
+  alert("Please login before placing an order.");
+  document.getElementById("authCard").scrollIntoView();
+  return;
+ }
+
+ const net=document.getElementById("dataNetwork").value;
+ const phone=document.getElementById("dataPhone").value.trim();
+ const size=document.getElementById("dataPlan").value;
+
+ if(!net||!size||!validPhone(phone)){
+  alert("Please enter a valid phone number and select network and plan.");
+  return;
+ }
+
+ const price=prices[net][size];
+ const summary=document.getElementById("dataSummary");
+ summary.style.display="block";
+ summary.textContent="";
+
+ const title=document.createElement("h3");
+ title.textContent="Data Order Summary";
+ summary.appendChild(title);
+
+ [
+  "Order ID: "+generateOrderID(),
+  "Network: "+net,
+  "Phone: "+phone,
+  "Plan: "+size,
+  "Amount: ₦"+price.toLocaleString("en-NG"),
+  "DEMO ONLY: No payment or data delivery has occurred."
+ ].forEach(item=>{
+  const p=document.createElement("p");
+  p.textContent=item;
+  summary.appendChild(p);
+ });
 }
 
-// DATA ORDER
+function calculateAirtime(){
+ const amount=Number(document.getElementById("airAmount").value);
 
-function buyData() {
-const net=document.getElementById("dataNetwork").value;
-const phone=document.getElementById("dataPhone").value.trim();
-const size=document.getElementById("dataPlan").value;
+ if(!Number.isSafeInteger(amount)||amount<50||amount>100000){
+  document.getElementById("discountValue").textContent="₦0";
+  document.getElementById("payable").textContent="₦0";
+  return;
+ }
 
-if(!net || !size || !validPhone(phone)) {
-alert("Please enter a valid phone number and select network and plan.");
-return;
+ const saving=amount*airtimeDiscount/100;
+ const payable=amount-saving;
+
+ document.getElementById("discountValue").textContent="₦"+saving.toFixed(2);
+ document.getElementById("payable").textContent="₦"+payable.toFixed(2);
 }
 
-const price=prices[net][size];
-const id=generateOrderID();
+document.getElementById("airAmount").addEventListener("input",calculateAirtime);
 
-const summary=document.getElementById("dataSummary");
+function buyAirtime(){
+ if(!window.currentUser){
+  alert("Please login before placing an order.");
+  document.getElementById("authCard").scrollIntoView();
+  return;
+ }
 
-summary.style.display="block";
-summary.textContent="";
+ const net=document.getElementById("airNetwork").value;
+ const phone=document.getElementById("airPhone").value.trim();
+ const amount=Number(document.getElementById("airAmount").value);
 
-const title=document.createElement("h3");
-title.textContent="Data Order Summary";
+ if(!net||!validPhone(phone)||!Number.isSafeInteger(amount)||amount<50||amount>100000){
+  alert("Please enter valid airtime details.");
+  return;
+ }
 
-const details=[
-"Order ID: "+id,
-"Network: "+net,
-"Phone: "+phone,
-"Plan: "+size,
-"Amount: ₦"+price.toLocaleString("en-NG"),
-"DEMO ONLY: No payment or data delivery has occurred."
-];
+ const saving=amount*airtimeDiscount/100;
+ const payable=amount-saving;
+ const summary=document.getElementById("airSummary");
 
-summary.appendChild(title);
+ summary.style.display="block";
+ summary.textContent="";
 
-details.forEach(item=>{
-const p=document.createElement("p");
-p.textContent=item;
-summary.appendChild(p);
-});
+ const title=document.createElement("h3");
+ title.textContent="Airtime Order Summary";
+ summary.appendChild(title);
+
+ [
+  "Order ID: "+generateOrderID(),
+  "Network: "+net,
+  "Phone: "+phone,
+  "Airtime Value: ₦"+amount.toLocaleString("en-NG"),
+  "Discount: "+airtimeDiscount+"%",
+  "Discount Value: ₦"+saving.toFixed(2),
+  "Customer Pays: ₦"+payable.toFixed(2),
+  "DEMO ONLY: No payment or airtime delivery has occurred."
+ ].forEach(item=>{
+  const p=document.createElement("p");
+  p.textContent=item;
+  summary.appendChild(p);
+ });
 }
-
-// AIRTIME CALCULATOR
-
-function calculateAirtime() {
-const amount=Number(document.getElementById("airAmount").value);
-const discount=airtimeDiscount;
-
-if(!Number.isSafeInteger(amount) || amount<50 || amount>100000) {
-document.getElementById("discountValue").textContent="₦0";
-document.getElementById("payable").textContent="₦0";
-return;
-}
-
-const saving=amount*discount/100;
-const payable=amount-saving;
-
-document.getElementById("discountValue").textContent=
-"₦"+saving.toFixed(2);
-
-document.getElementById("payable").textContent=
-"₦"+payable.toFixed(2);
-}
-
-document.getElementById("airAmount")
-.addEventListener("input",calculateAirtime);
-
-// AIRTIME ORDER
-
-function buyAirtime() {
-const net=document.getElementById("airNetwork").value;
-const phone=document.getElementById("airPhone").value.trim();
-const amount=Number(document.getElementById("airAmount").value);
-
-if(!net || !validPhone(phone) ||
-!Number.isSafeInteger(amount) || amount<50 || amount>100000) {
-alert("Please enter valid airtime details.");
-return;
-}
-
-const saving=amount*airtimeDiscount/100;
-const payable=amount-saving;
-
-const summary=document.getElementById("airSummary");
-
-summary.style.display="block";
-summary.textContent="";
-
-const title=document.createElement("h3");
-title.textContent="Airtime Order Summary";
-summary.appendChild(title);
-
-[
-"Order ID: "+generateOrderID(),
-"Network: "+net,
-"Phone: "+phone,
-"Airtime Value: ₦"+amount.toLocaleString("en-NG"),
-"Discount: "+airtimeDiscount+"%",
-"Discount Value: ₦"+saving.toFixed(2),
-"Customer Pays: ₦"+payable.toFixed(2),
-"DEMO ONLY: No payment or airtime delivery has occurred."
-].forEach(item=>{
-const p=document.createElement("p");
-p.textContent=item;
-summary.appendChild(p);
-});
-}
-
-// ADMIN SETTINGS
 
 const adminNetwork=document.getElementById("adminNetwork");
 
-function loadAdminSettings() {
-const p=prices[adminNetwork.value];
-
-document.getElementById("p500").value=p["500MB"];
-document.getElementById("p1").value=p["1GB"];
-document.getElementById("p2").value=p["2GB"];
-document.getElementById("p5").value=p["5GB"];
-document.getElementById("adminDiscount").value=airtimeDiscount;
+function loadAdminSettings(){
+ const p=prices[adminNetwork.value];
+ document.getElementById("p500").value=p["500MB"];
+ document.getElementById("p1").value=p["1GB"];
+ document.getElementById("p2").value=p["2GB"];
+ document.getElementById("p5").value=p["5GB"];
+ document.getElementById("adminDiscount").value=airtimeDiscount;
 }
 
 adminNetwork.addEventListener("change",loadAdminSettings);
 
-function saveSettings() {
-const values={
-"500MB":Number(document.getElementById("p500").value),
-"1GB":Number(document.getElementById("p1").value),
-"2GB":Number(document.getElementById("p2").value),
-"5GB":Number(document.getElementById("p5").value)
-};
+function saveSettings(){
+ const values={
+  "500MB":Number(document.getElementById("p500").value),
+  "1GB":Number(document.getElementById("p1").value),
+  "2GB":Number(document.getElementById("p2").value),
+  "5GB":Number(document.getElementById("p5").value)
+ };
 
-const discount=Number(document.getElementById("adminDiscount").value);
+ const discount=Number(document.getElementById("adminDiscount").value);
 
-if(!Object.values(values).every(v=>
-Number.isSafeInteger(v) && v>0)) {
-alert("Enter valid data prices.");
-return;
+ if(!Object.values(values).every(v=>Number.isSafeInteger(v)&&v>0)){
+  alert("Enter valid data prices.");
+  return;
+ }
+
+ if(!Number.isFinite(discount)||discount<0||discount>100){
+  alert("Enter a valid discount between 0 and 100.");
+  return;
+ }
+
+ prices[adminNetwork.value]=values;
+ airtimeDiscount=discount;
+
+ try{
+  localStorage.setItem("aliyas_vtu_prices",JSON.stringify(prices));
+  localStorage.setItem("aliyas_vtu_discount",String(discount));
+ }catch(error){
+  alert("Could not save settings.");
+  return;
+ }
+
+ updateDataPrice();
+ calculateAirtime();
+ alert("Settings saved successfully!");
 }
 
-if(!Number.isFinite(discount) || discount<0 || discount>100) {
-alert("Enter a valid discount between 0 and 100.");
-return;
-}
+function restoreSettings(){
+ try{
+  const saved=localStorage.getItem("aliyas_vtu_prices");
+  const savedDiscount=localStorage.getItem("aliyas_vtu_discount");
 
-prices[adminNetwork.value]=values;
-airtimeDiscount=discount;
+  if(saved){
+   const parsed=JSON.parse(saved);
+   for(const net of Object.keys(defaultPrices)){
+    for(const size of Object.keys(defaultPrices[net])){
+     const value=parsed?.[net]?.[size];
+     if(Number.isSafeInteger(value)&&value>0){
+      prices[net][size]=value;
+     }
+    }
+   }
+  }
 
-try {
-localStorage.setItem("aliyas_vtu_prices",JSON.stringify(prices));
-localStorage.setItem("aliyas_vtu_discount",String(discount));
-} catch(error) {
-alert("Could not save settings.");
-return;
-}
-
-updateDataPrice();
-calculateAirtime();
-
-alert("Settings saved successfully!");
-}
-
-function restoreSettings() {
-try {
-const saved=localStorage.getItem("aliyas_vtu_prices");
-const savedDiscount=localStorage.getItem("aliyas_vtu_discount");
-
-if(saved) {
-const parsed=JSON.parse(saved);
-
-for(const net of Object.keys(defaultPrices)) {
-for(const size of Object.keys(defaultPrices[net])) {
-const value=parsed?.[net]?.[size];
-if(Number.isSafeInteger(value) && value>0) {
-prices[net][size]=value;
-}
-}
-}
-}
-
-if(savedDiscount!==null) {
-const d=Number(savedDiscount);
-if(Number.isFinite(d) && d>=0 && d<=100) {
-airtimeDiscount=d;
-}
-}
-} catch(error) {
-console.log("Using default demo settings.");
-}
+  if(savedDiscount!==null){
+   const d=Number(savedDiscount);
+   if(Number.isFinite(d)&&d>=0&&d<=100) airtimeDiscount=d;
+  }
+ }catch(error){
+  console.log("Using default demo settings.");
+ }
 }
 
 restoreSettings();
 loadAdminSettings();
+</script>
 
+<!-- SUPABASE AUTHENTICATION -->
+
+<script type="module">
+import { createClient } from
+"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+// REPLACE THESE TWO VALUES WITH YOUR SUPABASE DETAILS
+const SUPABASE_URL = "https://al-ilyasvtu.com";
+const SUPABASE_KEY = "sb_publishable_7O5GzUj9rtEiSOnDjYpUBA_Oj3xQjzT";
+
+const supabase = createClient(SUPABASE_URL,SUPABASE_KEY);
+
+window.currentUser=null;
+
+const authMessage=document.getElementById("authMessage");
+
+function showMessage(message,color="#087c45"){
+ authMessage.textContent=message;
+ authMessage.style.color=color;
+}
+
+window.showLogin=function(){
+ document.getElementById("registerForm").style.display="none";
+ document.getElementById("loginForm").style.display="block";
+ showMessage("");
+};
+
+window.showRegister=function(){
+ document.getElementById("registerForm").style.display="block";
+ document.getElementById("loginForm").style.display="none";
+ showMessage("");
+};
+
+async function createOrUpdateProfile(user){
+ if(!user) return;
+
+ const metadata=user.user_metadata||{};
+
+ const profile={
+  id:user.id,
+  full_name:metadata.full_name||user.email,
+  phone:metadata.phone||null
+ };
+
+ const {error}=await supabase
+  .from("profiles")
+  .upsert(profile,{onConflict:"id"});
+
+ if(error){
+  console.error("Profile error:",error.message);
+  showMessage("Login successful, but profile could not load: "+error.message,"#b45309");
+ }
+}
+
+async function displayUser(user){
+ window.currentUser=user;
+
+ if(!user){
+  document.getElementById("dashboard").style.display="none";
+  document.getElementById("authCard").style.display="block";
+  return;
+ }
+
+ await createOrUpdateProfile(user);
+
+ const {data:profile,error}=await supabase
+  .from("profiles")
+  .select("full_name,phone")
+  .eq("id",user.id)
+  .maybeSingle();
+
+ document.getElementById("authCard").style.display="none";
+ document.getElementById("dashboard").style.display="block";
+
+ document.getElementById("profileName").textContent=
+  profile?.full_name||user.user_metadata?.full_name||"Customer";
+
+ document.getElementById("profileEmail").textContent=user.email||"";
+ document.getElementById("profilePhone").textContent=
+  profile?.phone||user.user_metadata?.phone||"Not provided";
+
+ if(error) console.error(error.message);
+}
+
+window.registerCustomer=async function(){
+ const name=document.getElementById("regName").value.trim();
+ const phone=document.getElementById("regPhone").value.trim();
+ const email=document.getElementById("regEmail").value.trim();
+ const password=document.getElementById("regPassword").value;
+
+ if(name.length<2){
+  showMessage("Please enter your full name.","red");
+  return;
+ }
+
+ if(!/^\d{11}$/.test(phone)){
+  showMessage("Enter a valid 11-digit phone number.","red");
+  return;
+ }
+
+ if(!email||password.length<6){
+  showMessage("Enter a valid email and a password of at least 6 characters.","red");
+  return;
+ }
+
+ showMessage("Creating your account...");
+
+ const {data,error}=await supabase.auth.signUp({
+  email,
+  password,
+  options:{
+   data:{
+    full_name:name,
+    phone:phone
+   }
+  }
+ });
+
+ if(error){
+  showMessage(error.message,"red");
+  return;
+ }
+
+ if(data.session){
+  await displayUser(data.user);
+  showMessage("Account created successfully!");
+ }else{
+  showMessage("Registration successful! Please check your email and confirm your account before logging in.");
+ }
+};
+
+window.loginCustomer=async function(){
+ const email=document.getElementById("loginEmail").value.trim();
+ const password=document.getElementById("loginPassword").value;
+
+ if(!email||!password){
+  showMessage("Enter your email and password.","red");
+  return;
+ }
+
+ showMessage("Logging in...");
+
+ const {data,error}=await supabase.auth.signInWithPassword({
+  email,
+  password
+ });
+
+ if(error){
+  showMessage(error.message,"red");
+  return;
+ }
+
+ await displayUser(data.user);
+ showMessage("Welcome back!");
+};
+
+window.logoutCustomer=async function(){
+ const {error}=await supabase.auth.signOut();
+
+ if(error){
+  showMessage(error.message,"red");
+  return;
+ }
+
+ window.currentUser=null;
+ document.getElementById("dashboard").style.display="none";
+ document.getElementById("authCard").style.display="block";
+ window.showLogin();
+ showMessage("You have logged out successfully.");
+};
+
+supabase.auth.onAuthStateChange((event,session)=>{
+ if(event==="SIGNED_IN"&&session?.user){
+  displayUser(session.user);
+ }
+
+ if(event==="SIGNED_OUT"){
+  window.currentUser=null;
+  document.getElementById("dashboard").style.display="none";
+  document.getElementById("authCard").style.display="block";
+ }
+});
+
+const {data:{session}}=await supabase.auth.getSession();
+
+if(session?.user){
+ await displayUser(session.user);
+}
 </script>
 
 </body>

@@ -130,21 +130,85 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}#dashboard,#adminPanel{displ
 </section>
 </main>
 <footer><h3>AL-ILYAS VTU</h3><p>Fast, Reliable and Affordable Services.</p><p>© 2026 AL-ILYAS VTU</p></footer>
-
+  
 <script>
-const defaultPrices={MTN:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},Airtel:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},Glo:{"500MB":150,"1GB":300,"2GB":600,"5GB":1500},"9mobile":{"500MB":150,"1GB":300,"2GB":600,"5GB":1500}};
-let prices=JSON.parse(JSON.stringify(defaultPrices)),airtimeDiscount=2;
-const $=id=>document.getElementById(id);
-function validPhone(p){return /^\d{11}$/.test(p)}
-function updateDataPlans(){const n=$("dataNetwork").value,s=$("dataPlan");s.innerHTML='<option value="">Select Data Plan</option>';if(!n){$("dataPrice").textContent="₦0";return}Object.keys(prices[n]).forEach(k=>{const o=document.createElement("option");o.value=k;o.textContent=k;s.appendChild(o)});updateDataPrice()}
-function updateDataPrice(){const n=$("dataNetwork").value,p=$("dataPlan").value;$("dataPrice").textContent=n&&p?"₦"+prices[n][p].toLocaleString("en-NG"):"₦0"}
-$("dataNetwork").addEventListener("change",updateDataPlans);$("dataPlan").addEventListener("change",updateDataPrice);
-function orderId(){return "ALIYAS"+Date.now()}
-function showSummary(id,title,lines){const box=$(id);box.style.display="block";box.textContent="";const h=document.createElement("h3");h.textContent=title;box.appendChild(h);lines.forEach(t=>{const p=document.createElement("p");p.textContent=t;box.appendChild(p)})}
+const defaultPrices = {
+  MTN: {"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
+  Airtel: {"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
+  Glo: {"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
+  "9mobile": {"500MB":150,"1GB":300,"2GB":600,"5GB":1500}
+};
+
+let prices = JSON.parse(JSON.stringify(defaultPrices));
+let airtimeDiscount = 2;
+
+const $ = id => document.getElementById(id);
+
+function validPhone(p) {
+  return /^\d{11}$/.test(p);
+}
+
+function updateDataPlans() {
+  const n = $("dataNetwork").value;
+  const s = $("dataPlan");
+
+  s.innerHTML = '<option value="">Select Data Plan</option>';
+
+  if (!n || !prices[n]) {
+    $("dataPrice").textContent = "₦0";
+    return;
+  }
+
+  Object.keys(prices[n]).forEach(k => {
+    const o = document.createElement("option");
+    o.value = k;
+    o.textContent = k;
+    s.appendChild(o);
+  });
+
+  updateDataPrice();
+}
+
+function updateDataPrice() {
+  const n = $("dataNetwork").value;
+  const p = $("dataPlan").value;
+  const price = prices[n]?.[p];
+
+  $("dataPrice").textContent =
+    n && p && price ? "₦" + price.toLocaleString("en-NG") : "₦0";
+}
+
+$("dataNetwork").addEventListener("change", updateDataPlans);
+$("dataPlan").addEventListener("change", updateDataPrice);
+
+function showSummary(id, title, lines) {
+  const box = $(id);
+  box.style.display = "block";
+  box.textContent = "";
+
+  const h = document.createElement("h3");
+  h.textContent = title;
+  box.appendChild(h);
+
+  lines.forEach(t => {
+    const p = document.createElement("p");
+    p.textContent = t;
+    box.appendChild(p);
+  });
+}
+
 async function buyData() {
-  if (!window.currentUser) {
+  const u = window.currentUser;
+  const client = window.supabase;
+
+  if (!u) {
     alert("Please login before ordering.");
     $("authCard").scrollIntoView();
+    return;
+  }
+
+  if (!client) {
+    alert("Supabase is not ready. Please refresh the page.");
     return;
   }
 
@@ -153,16 +217,26 @@ async function buyData() {
   const s = $("dataPlan").value;
   const price = Number(prices[n]?.[s]);
 
-  if (!n || !s || !validPhone(p) || !Number.isFinite(price) || price <= 0) {
+  if (!n || !s || !validPhone(p) ||
+      !Number.isFinite(price) || price <= 0) {
     alert("Enter a valid phone number, network and plan.");
     return;
   }
 
+  const btn = document.querySelector(
+    'button[onclick="buyData()"]'
+  );
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Saving Order...";
+  }
+
   try {
-   const { data, error } = await window.supabase
+    const { data, error } = await client
       .from("vtu_orders")
       .insert({
-        user_id: window.currentUser.id,
+        user_id: u.id,
         service_type: "data",
         network: n,
         phone_number: p,
@@ -188,14 +262,43 @@ async function buyData() {
   } catch (error) {
     console.error("Data order error:", error);
     alert("Unable to save data order: " + error.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Continue Data Order";
+    }
   }
 }
-function calcAirtime(){const a=Number($("airAmount").value);if(!Number.isSafeInteger(a)||a<50||a>100000){$("discountValue").textContent="₦0";$("payable").textContent="₦0";return}const d=a*airtimeDiscount/100;$("discountValue").textContent="₦"+d.toFixed(2);$("payable").textContent="₦"+(a-d).toFixed(2)}
-$("airAmount").addEventListener("input",calcAirtime);
+
+function calcAirtime() {
+  const a = Number($("airAmount").value);
+
+  if (!Number.isSafeInteger(a) || a < 50 || a > 100000) {
+    $("discountValue").textContent = "₦0";
+    $("payable").textContent = "₦0";
+    return;
+  }
+
+  const d = a * airtimeDiscount / 100;
+
+  $("discountValue").textContent = "₦" + d.toFixed(2);
+  $("payable").textContent = "₦" + (a - d).toFixed(2);
+}
+
+$("airAmount").addEventListener("input", calcAirtime);
+
 async function buyAirtime() {
-  if (!window.currentUser) {
+  const u = window.currentUser;
+  const client = window.supabase;
+
+  if (!u) {
     alert("Please login before ordering.");
     $("authCard").scrollIntoView();
+    return;
+  }
+
+  if (!client) {
+    alert("Supabase is not ready. Please refresh the page.");
     return;
   }
 
@@ -203,7 +306,8 @@ async function buyAirtime() {
   const p = $("airPhone").value.trim();
   const a = Number($("airAmount").value);
 
-  if (!n || !validPhone(p) || !Number.isSafeInteger(a) || a < 50 || a > 100000) {
+  if (!n || !validPhone(p) ||
+      !Number.isSafeInteger(a) || a < 50 || a > 100000) {
     alert("Enter valid airtime details.");
     return;
   }
@@ -211,11 +315,20 @@ async function buyAirtime() {
   const d = a * airtimeDiscount / 100;
   const payable = a - d;
 
+  const btn = document.querySelector(
+    'button[onclick="buyAirtime()"]'
+  );
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Saving Order...";
+  }
+
   try {
-    const { data, error } = await window.supabase
+    const { data, error } = await client
       .from("vtu_orders")
       .insert({
-        user_id: window.currentUser.id,
+        user_id: u.id,
         service_type: "airtime",
         network: n,
         phone_number: p,
@@ -243,76 +356,770 @@ async function buyAirtime() {
   } catch (error) {
     console.error("Airtime order error:", error);
     alert("Unable to save airtime order: " + error.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Continue Airtime Order";
+    }
   }
 }
-function loadSettings(){const p=prices[$("adminNetwork").value];$("p500").value=p["500MB"];$("p1").value=p["1GB"];$("p2").value=p["2GB"];$("p5").value=p["5GB"];$("adminDiscount").value=airtimeDiscount}
-$("adminNetwork").addEventListener("change",loadSettings);
-function saveSettings(){const v={"500MB":Number($("p500").value),"1GB":Number($("p1").value),"2GB":Number($("p2").value),"5GB":Number($("p5").value)},d=Number($("adminDiscount").value);if(!Object.values(v).every(x=>Number.isSafeInteger(x)&&x>0)||!Number.isFinite(d)||d<0||d>100){alert("Enter valid prices and discount.");return}prices[$("adminNetwork").value]=v;airtimeDiscount=d;try{localStorage.setItem("aliyas_vtu_prices",JSON.stringify(prices));localStorage.setItem("aliyas_vtu_discount",String(d))}catch(e){}updateDataPrice();calcAirtime();alert("Demo settings saved.")}
-try{const saved=JSON.parse(localStorage.getItem("aliyas_vtu_prices")||"null");if(saved)for(const n in defaultPrices)for(const s in defaultPrices[n])if(Number.isSafeInteger(saved?.[n]?.[s])&&saved[n][s]>0)prices[n][s]=saved[n][s];const d=Number(localStorage.getItem("aliyas_vtu_discount"));if(Number.isFinite(d)&&d>=0&&d<=100)airtimeDiscount=d}catch(e){}loadSettings();
+
+function loadSettings() {
+  const p = prices[$("adminNetwork").value];
+
+  if (!p) return;
+
+  $("p500").value = p["500MB"];
+  $("p1").value = p["1GB"];
+  $("p2").value = p["2GB"];
+  $("p5").value = p["5GB"];
+  $("adminDiscount").value = airtimeDiscount;
+}
+
+$("adminNetwork").addEventListener("change", loadSettings);
+
+function saveSettings() {
+  const v = {
+    "500MB": Number($("p500").value),
+    "1GB": Number($("p1").value),
+    "2GB": Number($("p2").value),
+    "5GB": Number($("p5").value)
+  };
+
+  const d = Number($("adminDiscount").value);
+
+  if (!Object.values(v).every(
+    x => Number.isSafeInteger(x) && x > 0
+  ) || !Number.isFinite(d) || d < 0 || d > 100) {
+    alert("Enter valid prices and discount.");
+    return;
+  }
+
+  prices[$("adminNetwork").value] = v;
+  airtimeDiscount = d;
+
+  try {
+    localStorage.setItem("aliyas_vtu_prices", JSON.stringify(prices));
+    localStorage.setItem("aliyas_vtu_discount", String(d));
+  } catch (e) {
+    console.error("Settings storage:", e);
+  }
+
+  updateDataPrice();
+  calcAirtime();
+  alert("Demo settings saved.");
+}
+
+try {
+  const saved = JSON.parse(
+    localStorage.getItem("aliyas_vtu_prices") || "null"
+  );
+
+  if (saved) {
+    for (const n in defaultPrices) {
+      for (const s in defaultPrices[n]) {
+        const value = Number(saved?.[n]?.[s]);
+
+        if (Number.isSafeInteger(value) && value > 0) {
+          prices[n][s] = value;
+        }
+      }
+    }
+  }
+
+  const d = Number(localStorage.getItem("aliyas_vtu_discount"));
+
+  if (Number.isFinite(d) && d >= 0 && d <= 100) {
+    airtimeDiscount = d;
+  }
+} catch (e) {
+  console.error("Settings loading:", e);
+}
+
+loadSettings();
 </script>
 
 <script type="module">
-import {createClient} from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { createClient } from
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-/* Replace these two placeholders with your Supabase Project URL and Publishable key.
-   Do NOT use the Secret/service_role key in this public website. */
-const SUPABASE_URL = "https://bfmsbdgjdaiqmypcuxce.supabase.co";
-const SUPABASE_KEY = "sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
+const SUPABASE_URL =
+  "https://bfmsbdgjdaiqmypcuxce.supabase.co";
 
-if(SUPABASE_URL.startsWith("PASTE_")||SUPABASE_KEY.startsWith("PASTE_")){
-  document.getElementById("authMessage").textContent="Set your Supabase Project URL and Publishable key in the code before using the website.";
-  document.getElementById("authMessage").style.color="red";
+/* Saka Publishable/anon key ɗinka a nan.
+   Kada ka yi amfani da Secret/service_role key. */
+const SUPABASE_KEY = "PASTE_YOUR_PUBLIC_ANON_KEY";
+
+if (!SUPABASE_KEY || SUPABASE_KEY.startsWith("PASTE_")) {
+  document.getElementById("authMessage").textContent =
+    "Set your Supabase Publishable key before using the website.";
+  document.getElementById("authMessage").style.color = "red";
+  throw new Error("Supabase Publishable key is missing.");
 }
+
 window.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-window.currentUser=null;
-  window.addEventListener("load", () => {
-  console.log("Supabase client:", !!window.supabase);
-});
-let displayedUserId=null,currentUserIsAdmin=false;
-const $=id=>document.getElementById(id);
-const bankAccounts={OPay:"6458790287",Moniepoint:"8136438501"};
-function msg(id,text,color="#087c45"){$(id).textContent=text;$(id).style.color=color}
-function naira(v){const n=Number(v);return "₦"+(Number.isFinite(n)?n:0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}
-function date(v){const d=new Date(v);return isNaN(d)?"Not available":d.toLocaleString("en-NG")}
-function node(tag,text,cls){const e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;return e}
-function statusClass(s){return s==="approved"?"approved":s==="rejected"?"rejected":"pending"}
-window.showLogin=()=>{$("registerForm").style.display="none";$("loginForm").style.display="block";msg("authMessage","")};
-window.showRegister=()=>{$("registerForm").style.display="block";$("loginForm").style.display="none";msg("authMessage","")};
-$("fundBank").addEventListener("change",()=>{const b=$("fundBank").value;if(!bankAccounts[b]){$("bankDetails").style.display="none";return}$("bankName").textContent=b;$("bankAccount").textContent=bankAccounts[b];$("bankDetails").style.display="block"});
-async function createProfile(u){const m=u.user_metadata||{};const {error}=await window.supabase.from("profiles").upsert({id:u.id,full_name:m.full_name||u.email,phone:m.phone||null},{onConflict:"id"});if(error)console.error("Profile upsert:",error.message)}
-async function checkAdmin(u){$("adminPanel").style.display="none";currentUserIsAdmin=false;if(!u)return false;const {data,error}=await window.supabase.from("admin_users").select("user_id").eq("user_id",u.id).maybeSingle();if(error){console.error("Admin check:",error.message);return false}if(!data)return false;currentUserIsAdmin=true;$("adminPanel").style.display="block";$("adminEmail").textContent=u.email||"Admin";await Promise.all([loadAdminFundingRequests(),loadTestFundingRequests()]);return true}
-async function loadWallet(u){$("walletBalance").textContent="Loading...";const {data,error}=await window.supabase.from("wallets").select("balance").eq("user_id",u.id).maybeSingle();if(error){$("walletBalance").textContent="Unavailable";$("walletMessage").textContent="Unable to load wallet: "+error.message;return}if(!data){$("walletBalance").textContent="₦0.00";$("walletMessage").textContent="Wallet record not found. Contact support.";return}$("walletBalance").textContent=naira(data.balance);$("walletMessage").textContent="Your wallet balance"}
-async function loadTransactions(u){const box=$("walletTransactions");box.textContent="Loading...";const {data,error}=await window.supabase.from("wallet_transactions").select("type,amount,status,reference,description,created_at").eq("user_id",u.id).order("created_at",{ascending:false}).limit(10);box.textContent="";if(error){box.append(node("p","Unable to load transactions: "+error.message,"empty"));return}if(!data?.length){box.append(node("p","No transactions yet.","empty"));return}data.forEach(t=>{const x=node("div","","item");[["Type",t.type],["Amount",naira(t.amount)],["Status",t.status],["Reference",t.reference],["Description",t.description],["Date",date(t.created_at)]].forEach(([k,v])=>x.append(node("p",k+": "+(v||"Not available"))));box.append(x)})}
-async function loadFundingHistory(u){const box=$("fundingHistory");box.textContent="Loading...";const {data,error}=await window.supabase.from("wallet_funding_requests").select("amount,bank,reference,status,created_at,admin_note").eq("user_id",u.id).order("created_at",{ascending:false}).limit(20);box.textContent="";if(error){box.append(node("p","Unable to load funding history: "+error.message,"empty"));return}if(!data?.length){box.append(node("p","No funding requests yet.","empty"));return}data.forEach(r=>{const x=node("div","","item");[["Amount",naira(r.amount)],["Bank",r.bank],["Reference",r.reference],["Status",r.status],["Date",date(r.created_at)],["Admin note",r.admin_note]].forEach(([k,v])=>{if(v)x.append(node("p",k+": "+v,k==="Status"?statusClass(r.status):""))});box.append(x)})}
-function renderAdminRequest(box,r,isTest){const x=node("div","","item");x.append(node("h4",isTest?"TEST Funding Request":"Funding Request"));[["Request ID",r.id],["Customer User ID",r.user_id],["Amount",naira(r.amount)],["Bank",r.bank],["Transaction Reference",r.reference],["Submitted",date(r.created_at)]].forEach(([k,v])=>{if(v!==null&&v!==undefined&&v!=="")x.append(node("p",k+": "+v))});x.append(node("p","Status: "+r.status,statusClass(r.status)));if(r.admin_note)x.append(node("p","Admin Note: "+r.admin_note));if(r.status==="pending"){const actions=node("div","","actions");const a=node("button","Approve"),b=node("button","Reject","danger");a.onclick=()=>reviewRequest(r.id,"approve",isTest);b.onclick=()=>reviewRequest(r.id,"reject",isTest);actions.append(a,b);x.append(actions)}box.append(x)}
-async function loadRequestList({table,columns,boxId,messageId,buttonId,isTest}){const box=$(boxId),btn=$(buttonId);if(!window.currentUser||!currentUserIsAdmin){box.textContent="Admin access required.";return}btn.disabled=true;btn.textContent="Loading...";box.textContent="Loading requests...";try{const {data,error}=await window.supabase        .from(table).select(columns).order("created_at",{ascending:false}).limit(100);box.textContent="";if(error){console.error(table+" load:",error);box.append(node("p","Unable to load "+(isTest?"test":"real")+" requests: "+error.message,"empty"));msg(messageId,"Database error: "+error.message,"red");return}if(!data?.length){box.append(node("p","No requests found.","empty"));msg(messageId,"Loaded successfully. No requests found.");return}data.forEach(r=>renderAdminRequest(box,r,isTest));msg(messageId,"Loaded "+data.length+" request(s); pending: "+data.filter(r=>r.status==="pending").length+".")}catch(e){console.error(e);box.textContent="Unexpected error loading requests.";msg(messageId,e.message,"red")}finally{btn.disabled=false;btn.textContent=isTest?"Refresh Test Requests":"Refresh Real Requests"}}
-/* Correct test table name and columns: the test table has no bank column. */
- window.loadAdminFundingRequests=()=>loadRequestList({
-  table:"wallet_funding_requests",
-  columns:"id,user_id,amount,bank,reference,status,created_at,admin_note",
-  boxId:"adminFundingList",
-  messageId:"adminMessage",
-  buttonId:"refreshAdminButton",
-  isTest:false
+window.currentUser = null;
+
+let displayedUserId = null;
+let currentUserIsAdmin = false;
+
+const $ = id => document.getElementById(id);
+
+const bankAccounts = {
+  OPay: "6458790287",
+  Moniepoint: "8136438501"
+};
+
+function msg(id, text, color = "#087c45") {
+  $(id).textContent = text;
+  $(id).style.color = color;
+}
+
+function naira(v) {
+  const n = Number(v);
+  return "₦" + (Number.isFinite(n) ? n : 0)
+    .toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+}
+
+function date(v) {
+  const d = new Date(v);
+  return isNaN(d) ? "Not available" : d.toLocaleString("en-NG");
+}
+
+function node(tag, text, cls) {
+  const e = document.createElement(tag);
+  e.textContent = text;
+  if (cls) e.className = cls;
+  return e;
+}
+
+function statusClass(s) {
+  return s === "approved" ? "approved" :
+    s === "rejected" ? "rejected" : "pending";
+}
+
+window.showLogin = () => {
+  $("registerForm").style.display = "none";
+  $("loginForm").style.display = "block";
+  msg("authMessage", "");
+};
+
+window.showRegister = () => {
+  $("registerForm").style.display = "block";
+  $("loginForm").style.display = "none";
+  msg("authMessage", "");
+};
+
+$("fundBank").addEventListener("change", () => {
+  const b = $("fundBank").value;
+
+  if (!bankAccounts[b]) {
+    $("bankDetails").style.display = "none";
+    return;
+  }
+
+  $("bankName").textContent = b;
+  $("bankAccount").textContent = bankAccounts[b];
+  $("bankDetails").style.display = "block";
 });
 
-window.loadTestFundingRequests=()=>loadRequestList({
-  table:"wallet_funding_test_requests",
-  columns:"id,user_id,amount,reference,status,created_at,admin_note",
-  boxId:"testFundingList",
-  messageId:"testAdminMessage",
-  buttonId:"refreshTestButton",
-  isTest:true
+async function createProfile(u) {
+  const m = u.user_metadata || {};
+
+  const { error } = await window.supabase
+    .from("profiles")
+    .upsert({
+      id: u.id,
+      full_name: m.full_name || u.email,
+      phone: m.phone || null
+    }, { onConflict: "id" });
+
+  if (error) console.error("Profile upsert:", error.message);
+}
+
+async function checkAdmin(u) {
+  $("adminPanel").style.display = "none";
+  currentUserIsAdmin = false;
+
+  if (!u) return false;
+
+  const { data, error } = await window.supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", u.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Admin check:", error.message);
+    return false;
+  }
+
+  if (!data) return false;
+
+  currentUserIsAdmin = true;
+  $("adminPanel").style.display = "block";
+  $("adminEmail").textContent = u.email || "Admin";
+
+  await Promise.all([
+    loadAdminFundingRequests(),
+    loadTestFundingRequests()
+  ]);
+
+  return true;
+}
+
+async function loadWallet(u) {
+  $("walletBalance").textContent = "Loading...";
+
+  const { data, error } = await window.supabase
+    .from("wallets")
+    .select("balance")
+    .eq("user_id", u.id)
+    .maybeSingle();
+
+  if (error) {
+    $("walletBalance").textContent = "Unavailable";
+    $("walletMessage").textContent =
+      "Unable to load wallet: " + error.message;
+    return;
+  }
+
+  if (!data) {
+    $("walletBalance").textContent = "₦0.00";
+    $("walletMessage").textContent =
+      "Wallet record not found. Contact support.";
+    return;
+  }
+
+  $("walletBalance").textContent = naira(data.balance);
+  $("walletMessage").textContent = "Your wallet balance";
+}
+
+async function loadTransactions(u) {
+  const box = $("walletTransactions");
+  box.textContent = "Loading...";
+
+  const { data, error } = await window.supabase
+    .from("wallet_transactions")
+    .select("type,amount,status,reference,description,created_at")
+    .eq("user_id", u.id)
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  box.textContent = "";
+
+  if (error) {
+    box.append(node("p", "Unable to load transactions: " +
+      error.message, "empty"));
+    return;
+  }
+
+  if (!data?.length) {
+    box.append(node("p", "No transactions yet.", "empty"));
+    return;
+  }
+
+  data.forEach(t => {
+    const x = node("div", "", "item");
+
+    [
+      ["Type", t.type],
+      ["Amount", naira(t.amount)],
+      ["Status", t.status],
+      ["Reference", t.reference],
+      ["Description", t.description],
+      ["Date", date(t.created_at)]
+    ].forEach(([k, v]) => {
+      x.append(node("p", k + ": " + (v || "Not available")));
+    });
+
+    box.append(x);
+  });
+}
+
+async function loadFundingHistory(u) {
+  const box = $("fundingHistory");
+  box.textContent = "Loading...";
+
+  const { data, error } = await window.supabase
+    .from("wallet_funding_requests")
+    .select("amount,bank,reference,status,created_at,admin_note")
+    .eq("user_id", u.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  box.textContent = "";
+
+  if (error) {
+    box.append(node("p", "Unable to load funding history: " +
+      error.message, "empty"));
+    return;
+  }
+
+  if (!data?.length) {
+    box.append(node("p", "No funding requests yet.", "empty"));
+    return;
+  }
+
+  data.forEach(r => {
+    const x = node("div", "", "item");
+
+    [
+      ["Amount", naira(r.amount)],
+      ["Bank", r.bank],
+      ["Reference", r.reference],
+      ["Status", r.status],
+      ["Date", date(r.created_at)],
+      ["Admin note", r.admin_note]
+    ].forEach(([k, v]) => {
+      if (v) {
+        x.append(node(
+          "p",
+          k + ": " + v,
+          k === "Status" ? statusClass(r.status) : ""
+        ));
+      }
+    });
+
+    box.append(x);
+  });
+}
+
+function renderAdminRequest(box, r, isTest) {
+  const x = node("div", "", "item");
+
+  x.append(node("h4",
+    isTest ? "TEST Funding Request" : "Funding Request"));
+
+  [
+    ["Request ID", r.id],
+    ["Customer User ID", r.user_id],
+    ["Amount", naira(r.amount)],
+    ["Bank", r.bank],
+    ["Transaction Reference", r.reference],
+    ["Submitted", date(r.created_at)]
+  ].forEach(([k, v]) => {
+    if (v !== null && v !== undefined && v !== "") {
+      x.append(node("p", k + ": " + v));
+    }
+  });
+
+  x.append(node("p", "Status: " + r.status, statusClass(r.status)));
+
+  if (r.admin_note) {
+    x.append(node("p", "Admin Note: " + r.admin_note));
+  }
+
+  if (r.status === "pending") {
+    const actions = node("div", "", "actions");
+    const a = node("button", "Approve");
+    const b = node("button", "Reject", "danger");
+
+    a.onclick = () => reviewRequest(r.id, "approve", isTest);
+    b.onclick = () => reviewRequest(r.id, "reject", isTest);
+
+    actions.append(a, b);
+    x.append(actions);
+  }
+
+  box.append(x);
+}
+
+async function loadRequestList({
+  table, columns, boxId, messageId, buttonId, isTest
+}) {
+  const box = $(boxId);
+  const btn = $(buttonId);
+
+  if (!window.currentUser || !currentUserIsAdmin) {
+    box.textContent = "Admin access required.";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Loading...";
+  box.textContent = "Loading requests...";
+
+  try {
+    const { data, error } = await window.supabase
+      .from(table)
+      .select(columns)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    box.textContent = "";
+
+    if (error) {
+      console.error(table + " load:", error);
+      box.append(node(
+        "p",
+        "Unable to load " + (isTest ? "test" : "real") +
+        " requests: " + error.message,
+        "empty"
+      ));
+      msg(messageId, "Database error: " + error.message, "red");
+      return;
+    }
+
+    if (!data?.length) {
+      box.append(node("p", "No requests found.", "empty"));
+      msg(messageId, "Loaded successfully. No requests found.");
+      return;
+    }
+
+    data.forEach(r => renderAdminRequest(box, r, isTest));
+
+    msg(messageId,
+      "Loaded " + data.length + " request(s); pending: " +
+      data.filter(r => r.status === "pending").length + ".");
+
+  } catch (e) {
+    console.error(e);
+    box.textContent = "Unexpected error loading requests.";
+    msg(messageId, e.message, "red");
+
+  } finally {
+    btn.disabled = false;
+    btn.textContent = isTest ?
+      "Refresh Test Requests" : "Refresh Real Requests";
+  }
+}
+
+window.loadAdminFundingRequests = () => loadRequestList({
+  table: "wallet_funding_requests",
+  columns: "id,user_id,amount,bank,reference,status,created_at,admin_note",
+  boxId: "adminFundingList",
+  messageId: "adminMessage",
+  buttonId: "refreshAdminButton",
+  isTest: false
 });
-   
-async function reviewRequest(id,decision,isTest){if(!window.currentUser||!currentUserIsAdmin){msg(isTest?"testAdminMessage":"adminMessage","Admin access required.","red");return}if(!confirm(isTest?"TEST ONLY: "+decision.toUpperCase()+" this test request?":"Confirm "+decision.toUpperCase()+"? Verify the money has arrived before approving a real request."))return;let note=prompt("Admin note (optional):");if(note===null)return;note=note.trim();if(note.length>500){alert("Note must be 500 characters or fewer.");return}const messageId=isTest?"testAdminMessage":"adminMessage";msg(messageId,"Processing...");try{const functionName=isTest?"admin_review_funding_test":"admin_review_funding";const {data,error}=await supabase.rpc(functionName,{p_request_id:id,p_decision:decision,p_admin_note:note||null});if(error){console.error(functionName,error);msg(messageId,"Review failed: "+error.message,"red");return}if(!data||data.success!==true){msg(messageId,"Database did not confirm the action: "+(data?.message||JSON.stringify(data)),"red");return}msg(messageId,(isTest?"TEST request ":"Funding request ")+decision+" action completed. Please refresh and verify its status.");if(isTest)await loadTestFundingRequests();else{await loadAdminFundingRequests();if(window.currentUser)await loadFundingHistory(window.currentUser);if(window.currentUser)await loadWallet(window.currentUser);if(window.currentUser)await loadTransactions(window.currentUser)}}catch(e){console.error(e);msg(messageId,"Unexpected error: "+e.message,"red")}}
-window.submitFundingRequest=async()=>{const u=window.currentUser;if(!u){msg("fundMessage","Please login first.","red");return}const amount=Number($("fundAmount").value),bank=$("fundBank").value,reference=$("fundReference").value.trim();if(!Number.isSafeInteger(amount)||amount<100||amount>1000000){msg("fundMessage","Enter an amount between ₦100 and ₦1,000,000.","red");return}if(!bankAccounts[bank]){msg("fundMessage","Select OPay or Moniepoint.","red");return}if(reference.length<3||reference.length>100){msg("fundMessage","Reference must be 3–100 characters.","red");return}const btn=$("fundButton");btn.disabled=true;btn.textContent="Submitting...";try{const {error}=await supabase.from("wallet_funding_requests").insert({user_id:u.id,amount,bank,reference});if(error){msg("fundMessage",error.code==="23505"?"This reference has already been submitted.":error.message,"red");return}$("fundAmount").value="";$("fundBank").value="";$("fundReference").value="";$("bankDetails").style.display="none";msg("fundMessage","Request submitted. It is pending verification.");await loadFundingHistory(u);if(currentUserIsAdmin)await loadAdminFundingRequests()}catch(e){msg("fundMessage",e.message,"red")}finally{btn.disabled=false;btn.textContent="Submit Funding Request"}};
-async function displayUser(u){if(!u){window.currentUser=null;displayedUserId=null;currentUserIsAdmin=false;$("dashboard").style.display="none";$("authCard").style.display="block";$("adminPanel").style.display="none";return}window.currentUser=u;$("authCard").style.display="none";$("dashboard").style.display="block";$("profileName").textContent=u.user_metadata?.full_name||u.email||"Customer";$("profileEmail").textContent=u.email||"";$("profilePhone").textContent=u.user_metadata?.phone||"Not provided";if(displayedUserId===u.id)return;displayedUserId=u.id;await createProfile(u);const {data:profile,error}=await supabase.from("profiles").select("full_name,phone").eq("id",u.id).maybeSingle();if(error)console.error("Profile fetch:",error.message);if(profile){$("profileName").textContent=profile.full_name||u.email;$("profilePhone").textContent=profile.phone||"Not provided"}await Promise.all([loadWallet(u),loadTransactions(u),loadFundingHistory(u),checkAdmin(u)])}
-window.registerCustomer=async()=>{const name=$("regName").value.trim(),phone=$("regPhone").value.trim(),email=$("regEmail").value.trim(),password=$("regPassword").value;if(name.length<2||!validPhone(phone)||!email||password.length<6){msg("authMessage","Enter your name, valid 11-digit phone, email and password (minimum 6 characters).","red");return}msg("authMessage","Creating account...");const {data,error}=await supabase.auth.signUp({email,password,options:{data:{full_name:name,phone}}});if(error){msg("authMessage",error.message,"red");return}if(data.session&&data.user){await displayUser(data.user);msg("authMessage","Account created successfully.")}else msg("authMessage","Registration successful. Log in to continue (check email if confirmation is enabled).")};
-window.loginCustomer=async()=>{const email=$("loginEmail").value.trim(),password=$("loginPassword").value;if(!email||!password){msg("authMessage","Enter email and password.","red");return}msg("authMessage","Logging in...");const {data,error}=await supabase.auth.signInWithPassword({email,password});if(error){msg("authMessage",error.message,"red");return}await displayUser(data.user);msg("authMessage","Welcome back!")};
-window.logoutCustomer=async()=>{const {error}=await supabase.auth.signOut();if(error){msg("authMessage",error.message,"red");return}await displayUser(null);$("walletBalance").textContent="₦0.00";$("walletMessage").textContent="Please login to view your wallet.";["walletTransactions","fundingHistory","adminFundingList","testFundingList"].forEach(id=>$(id).textContent="");$("fundMessage").textContent="";$("adminMessage").textContent="";$("testAdminMessage").textContent="";window.showLogin();msg("authMessage","You have logged out.")};
-supabase.auth.onAuthStateChange((event,session)=>{if(event==="SIGNED_IN"&&session?.user)setTimeout(()=>displayUser(session.user),0);if(event==="SIGNED_OUT")displayUser(null)});
-const {data:{session},error:sessionError}=await supabase.auth.getSession();if(sessionError)console.error("Session:",sessionError.message);if(session?.user)await displayUser(session.user);
+
+window.loadTestFundingRequests = () => loadRequestList({
+  table: "wallet_funding_test_requests",
+  columns: "id,user_id,amount,reference,status,created_at,admin_note",
+  boxId: "testFundingList",
+  messageId: "testAdminMessage",
+  buttonId: "refreshTestButton",
+  isTest: true
+});
+
+async function reviewRequest(id, decision, isTest) {
+  if (!window.currentUser || !currentUserIsAdmin) {
+    msg(isTest ? "testAdminMessage" : "adminMessage",
+      "Admin access required.", "red");
+    return;
+  }
+
+  if (!confirm(
+    isTest
+      ? "TEST ONLY: " + decision.toUpperCase() + " this test request?"
+      : "Confirm " + decision.toUpperCase() +
+        "? Verify the money has arrived before approving a real request."
+  )) return;
+
+  let note = prompt("Admin note (optional):");
+  if (note === null) return;
+
+  note = note.trim();
+
+  if (note.length > 500) {
+    alert("Note must be 500 characters or fewer.");
+    return;
+  }
+
+  const messageId = isTest ? "testAdminMessage" : "adminMessage";
+  msg(messageId, "Processing...");
+
+  try {
+    const functionName = isTest ?
+      "admin_review_funding_test" : "admin_review_funding";
+
+    const { data, error } = await window.supabase.rpc(functionName, {
+      p_request_id: id,
+      p_decision: decision,
+      p_admin_note: note || null
+    });
+
+    if (error) {
+      console.error(functionName, error);
+      msg(messageId, "Review failed: " + error.message, "red");
+      return;
+    }
+
+    if (!data || data.success !== true) {
+      msg(messageId,
+        "Database did not confirm the action: " +
+        (data?.message || JSON.stringify(data)), "red");
+      return;
+    }
+
+    msg(messageId,
+      (isTest ? "TEST request " : "Funding request ") +
+      decision + " action completed. Please refresh and verify its status.");
+
+    if (isTest) {
+      await loadTestFundingRequests();
+    } else {
+      await loadAdminFundingRequests();
+      if (window.currentUser) {
+        await loadFundingHistory(window.currentUser);
+        await loadWallet(window.currentUser);
+        await loadTransactions(window.currentUser);
+      }
+    }
+
+  } catch (e) {
+    console.error(e);
+    msg(messageId, "Unexpected error: " + e.message, "red");
+  }
+}
+
+window.submitFundingRequest = async () => {
+  const u = window.currentUser;
+
+  if (!u) {
+    msg("fundMessage", "Please login first.", "red");
+    return;
+  }
+
+  const amount = Number($("fundAmount").value);
+  const bank = $("fundBank").value;
+  const reference = $("fundReference").value.trim();
+
+  if (!Number.isSafeInteger(amount) ||
+      amount < 100 || amount > 1000000) {
+    msg("fundMessage",
+      "Enter an amount between ₦100 and ₦1,000,000.", "red");
+    return;
+  }
+
+  if (!bankAccounts[bank]) {
+    msg("fundMessage", "Select OPay or Moniepoint.", "red");
+    return;
+  }
+
+  if (reference.length < 3 || reference.length > 100) {
+    msg("fundMessage", "Reference must be 3–100 characters.", "red");
+    return;
+  }
+
+  const btn = $("fundButton");
+  btn.disabled = true;
+  btn.textContent = "Submitting...";
+
+  try {
+    const { error } = await window.supabase
+      .from("wallet_funding_requests")
+      .insert({
+        user_id: u.id,
+        amount,
+        bank,
+        reference
+      });
+
+    if (error) {
+      msg("fundMessage",
+        error.code === "23505"
+          ? "This reference has already been submitted."
+          : error.message,
+        "red");
+      return;
+    }
+
+    $("fundAmount").value = "";
+    $("fundBank").value = "";
+    $("fundReference").value = "";
+    $("bankDetails").style.display = "none";
+
+    msg("fundMessage",
+      "Request submitted. It is pending verification.");
+
+    await loadFundingHistory(u);
+
+    if (currentUserIsAdmin) {
+      await loadAdminFundingRequests();
+    }
+
+  } catch (e) {
+    msg("fundMessage", e.message, "red");
+
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Submit Funding Request";
+  }
+};
+
+async function displayUser(u) {
+  if (!u) {
+    window.currentUser = null;
+    displayedUserId = null;
+    currentUserIsAdmin = false;
+
+    $("dashboard").style.display = "none";
+    $("authCard").style.display = "block";
+    $("adminPanel").style.display = "none";
+    return;
+  }
+
+  window.currentUser = u;
+
+  $("authCard").style.display = "none";
+  $("dashboard").style.display = "block";
+
+  $("profileName").textContent =
+    u.user_metadata?.full_name || u.email || "Customer";
+
+  $("profileEmail").textContent = u.email || "";
+
+  $("profilePhone").textContent =
+    u.user_metadata?.phone || "Not provided";
+
+  if (displayedUserId === u.id) return;
+
+  displayedUserId = u.id;
+
+  await createProfile(u);
+
+  const { data: profile, error } = await window.supabase
+    .from("profiles")
+    .select("full_name,phone")
+    .eq("id", u.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Profile fetch:", error.message);
+  }
+
+  if (profile) {
+    $("profileName").textContent = profile.full_name || u.email;
+    $("profilePhone").textContent = profile.phone || "Not provided";
+  }
+
+  await Promise.all([
+    loadWallet(u),
+    loadTransactions(u),
+    loadFundingHistory(u),
+    checkAdmin(u)
+  ]);
+}
+
+window.registerCustomer = async () => {
+  const name = $("regName").value.trim();
+  const phone = $("regPhone").value.trim();
+  const email = $("regEmail").value.trim();
+  const password = $("regPassword").value;
+
+  if (name.length < 2 || !/^\d{11}$/.test(phone) ||
+      !email || password.length < 6) {
+    msg("authMessage",
+      "Enter your name, valid 11-digit phone, email and password (minimum 6 characters).",
+      "red");
+    return;
+  }
+
+  msg("authMessage", "Creating account...");
+
+  const { data, error } = await window.supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { full_name: name, phone }
+    }
+  });
+
+  if (error) {
+    msg("authMessage", error.message, "red");
+    return;
+  }
+
+  if (data.session && data.user) {
+    await displayUser(data.user);
+    msg("authMessage", "Account created successfully.");
+  } else {
+    msg("authMessage",
+      "Registration successful. Log in to continue (check email if confirmation is enabled).");
+  }
+};
+
+window.loginCustomer = async () => {
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPassword").value;
+
+  if (!email || !password) {
+    msg("authMessage", "Enter email and password.", "red");
+    return;
+  }
+
+  msg("authMessage", "Logging in...");
+
+  const { data, error } = await window.supabase.auth
+    .signInWithPassword({ email, password });
+
+  if (error) {
+    msg("authMessage", error.message, "red");
+    return;
+  }
+
+  await displayUser(data.user);
+  msg("authMessage", "Welcome back!");
+};
+
+window.logoutCustomer = async () => {
+  const { error } = await window.supabase.auth.signOut();
+
+  if (error) {
+    msg("authMessage", error.message, "red");
+    return;
+  }
+
+  await displayUser(null);
+
+  $("walletBalance").textContent = "₦0.00";
+  $("walletMessage").textContent =
+    "Please login to view your wallet.";
+
+  [
+    "walletTransactions",
+    "fundingHistory",
+    "adminFundingList",
+    "testFundingList"
+  ].forEach(id => $(id).textContent = "");
+
+  $("fundMessage").textContent = "";
+  $("adminMessage").textContent = "";
+  $("testAdminMessage").textContent = "";
+
+  window.showLogin();
+  msg("authMessage", "You have logged out.");
+};
+
+window.supabase.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_IN" && session?.user) {
+    setTimeout(() => displayUser(session.user), 0);
+  }
+
+  if (event === "SIGNED_OUT") {
+    displayUser(null);
+  }
+});
+
+const {
+  data: { session },
+  error: sessionError
+} = await window.supabase.auth.getSession();
+
+if (sessionError) {
+  console.error("Session:", sessionError.message);
+}
+
+if (session?.user) {
+  await displayUser(session.user);
+}
+
+console.log("AL-ILYAS VTU Supabase ready:", !!window.supabase);
 </script>
 </body>
 </html>

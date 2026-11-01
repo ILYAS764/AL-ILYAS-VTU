@@ -141,10 +141,110 @@ function updateDataPrice(){const n=$("dataNetwork").value,p=$("dataPlan").value;
 $("dataNetwork").addEventListener("change",updateDataPlans);$("dataPlan").addEventListener("change",updateDataPrice);
 function orderId(){return "ALIYAS"+Date.now()}
 function showSummary(id,title,lines){const box=$(id);box.style.display="block";box.textContent="";const h=document.createElement("h3");h.textContent=title;box.appendChild(h);lines.forEach(t=>{const p=document.createElement("p");p.textContent=t;box.appendChild(p)})}
-function buyData(){if(!window.currentUser){alert("Please login before ordering.");$("authCard").scrollIntoView();return}const n=$("dataNetwork").value,p=$("dataPhone").value.trim(),s=$("dataPlan").value;if(!n||!s||!validPhone(p)){alert("Enter a valid phone number, network and plan.");return}showSummary("dataSummary","Data Order Summary",["Order ID: "+orderId(),"Network: "+n,"Phone: "+p,"Plan: "+s,"Amount: ₦"+prices[n][s],"DEMO ONLY: No payment or data delivery has occurred."])}
+async function buyData() {
+  if (!window.currentUser) {
+    alert("Please login before ordering.");
+    $("authCard").scrollIntoView();
+    return;
+  }
+
+  const n = $("dataNetwork").value;
+  const p = $("dataPhone").value.trim();
+  const s = $("dataPlan").value;
+  const price = Number(prices[n]?.[s]);
+
+  if (!n || !s || !validPhone(p) || !Number.isFinite(price) || price <= 0) {
+    alert("Enter a valid phone number, network and plan.");
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("vtu_orders")
+      .insert({
+        user_id: window.currentUser.id,
+        service_type: "data",
+        network: n,
+        phone_number: p,
+        plan: s,
+        amount: price,
+        status: "pending"
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+
+    showSummary("dataSummary", "Data Order Summary", [
+      "Order ID: " + data.id,
+      "Network: " + n,
+      "Phone: " + p,
+      "Plan: " + s,
+      "Amount: ₦" + price,
+      "Status: Pending",
+      "No payment or data delivery has occurred."
+    ]);
+
+  } catch (error) {
+    console.error("Data order error:", error);
+    alert("Unable to save data order: " + error.message);
+  }
+}
 function calcAirtime(){const a=Number($("airAmount").value);if(!Number.isSafeInteger(a)||a<50||a>100000){$("discountValue").textContent="₦0";$("payable").textContent="₦0";return}const d=a*airtimeDiscount/100;$("discountValue").textContent="₦"+d.toFixed(2);$("payable").textContent="₦"+(a-d).toFixed(2)}
 $("airAmount").addEventListener("input",calcAirtime);
-function buyAirtime(){if(!window.currentUser){alert("Please login before ordering.");$("authCard").scrollIntoView();return}const n=$("airNetwork").value,p=$("airPhone").value.trim(),a=Number($("airAmount").value);if(!n||!validPhone(p)||!Number.isSafeInteger(a)||a<50||a>100000){alert("Enter valid airtime details.");return}const d=a*airtimeDiscount/100;showSummary("airSummary","Airtime Order Summary",["Order ID: "+orderId(),"Network: "+n,"Phone: "+p,"Airtime Value: ₦"+a,"Discount: "+airtimeDiscount+"%","Discount Value: ₦"+d.toFixed(2),"Customer Pays: ₦"+(a-d).toFixed(2),"DEMO ONLY: No payment or airtime delivery has occurred."])}
+async function buyAirtime() {
+  if (!window.currentUser) {
+    alert("Please login before ordering.");
+    $("authCard").scrollIntoView();
+    return;
+  }
+
+  const n = $("airNetwork").value;
+  const p = $("airPhone").value.trim();
+  const a = Number($("airAmount").value);
+
+  if (!n || !validPhone(p) || !Number.isSafeInteger(a) || a < 50 || a > 100000) {
+    alert("Enter valid airtime details.");
+    return;
+  }
+
+  const d = a * airtimeDiscount / 100;
+  const payable = a - d;
+
+  try {
+    const { data, error } = await supabase
+      .from("vtu_orders")
+      .insert({
+        user_id: window.currentUser.id,
+        service_type: "airtime",
+        network: n,
+        phone_number: p,
+        plan: "Airtime ₦" + a + " (" + airtimeDiscount + "% discount)",
+        amount: payable,
+        status: "pending"
+      })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+
+    showSummary("airSummary", "Airtime Order Summary", [
+      "Order ID: " + data.id,
+      "Network: " + n,
+      "Phone: " + p,
+      "Airtime Value: ₦" + a,
+      "Discount: " + airtimeDiscount + "%",
+      "Discount Value: ₦" + d.toFixed(2),
+      "Customer Pays: ₦" + payable.toFixed(2),
+      "Status: Pending",
+      "No payment or airtime delivery has occurred."
+    ]);
+
+  } catch (error) {
+    console.error("Airtime order error:", error);
+    alert("Unable to save airtime order: " + error.message);
+  }
+}
 function loadSettings(){const p=prices[$("adminNetwork").value];$("p500").value=p["500MB"];$("p1").value=p["1GB"];$("p2").value=p["2GB"];$("p5").value=p["5GB"];$("adminDiscount").value=airtimeDiscount}
 $("adminNetwork").addEventListener("change",loadSettings);
 function saveSettings(){const v={"500MB":Number($("p500").value),"1GB":Number($("p1").value),"2GB":Number($("p2").value),"5GB":Number($("p5").value)},d=Number($("adminDiscount").value);if(!Object.values(v).every(x=>Number.isSafeInteger(x)&&x>0)||!Number.isFinite(d)||d<0||d>100){alert("Enter valid prices and discount.");return}prices[$("adminNetwork").value]=v;airtimeDiscount=d;try{localStorage.setItem("aliyas_vtu_prices",JSON.stringify(prices));localStorage.setItem("aliyas_vtu_discount",String(d))}catch(e){}updateDataPrice();calcAirtime();alert("Demo settings saved.")}

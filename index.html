@@ -1206,8 +1206,19 @@ window.loadCustomerOrders = async function () {
     const time = document.createElement("small");
     time.textContent = date;
 
-    item.append(details, plan, amount, status, time);
-    box.appendChild(item);
+  const actions = document.createElement("div");
+
+["processing", "successful", "failed"].forEach(newStatus => {
+  const button = document.createElement("button");
+
+  button.textContent = newStatus.toUpperCase();
+  button.onclick = () =>
+    window.updateVtuOrderStatus(order.id, newStatus);
+
+  actions.appendChild(button);
+});
+
+item.append(details, plan, amount, status, user, date, actions);
   });
 };
 
@@ -1277,6 +1288,47 @@ window.loadAdminOrders = async function () {
     item.append(details, plan, amount, status, user, date);
     box.appendChild(item);
   });
+};
+
+ // ADMIN: UPDATE VTU ORDER STATUS
+window.updateVtuOrderStatus = async function (orderId, newStatus) {
+  if (!window.currentUser || !currentUserIsAdmin) {
+    alert("Admin access required.");
+    return;
+  }
+
+  const allowedStatuses = ["processing", "successful", "failed"];
+
+  if (!allowedStatuses.includes(newStatus)) {
+    alert("Invalid order status.");
+    return;
+  }
+
+  const confirmed = confirm(
+    "Are you sure you want to change this order to " +
+    newStatus.toUpperCase() + "?"
+  );
+
+  if (!confirmed) return;
+
+  const { data, error } = await window.supabase.rpc(
+    "admin_update_vtu_order_status",
+    {
+      p_order_id: orderId,
+      p_status: newStatus
+    }
+  );
+
+  if (error) {
+    alert("Unable to update order: " + error.message);
+    return;
+  }
+
+  alert("Order status updated successfully.");
+
+  if (window.loadAdminOrders) {
+    await window.loadAdminOrders();
+  }
 };
 </script>
 </body>

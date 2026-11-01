@@ -466,18 +466,19 @@ try {
 loadSettings();
 </script>
 
+
 <script type="module">
 import { createClient } from
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 const SUPABASE_URL =
   "https://bfmsbdgjdaiqmypcuxce.supabase.co";
+
 const SUPABASE_KEY = "sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
 
 if (!SUPABASE_KEY || SUPABASE_KEY.startsWith("PASTE_")) {
   document.getElementById("authMessage").textContent =
     "Set your Supabase Publishable key before using the website.";
-  document.getElementById("authMessage").style.color = "red";
   throw new Error("Supabase Publishable key is missing.");
 }
 
@@ -495,8 +496,10 @@ const bankAccounts = {
 };
 
 function msg(id, text, color = "#087c45") {
-  $(id).textContent = text;
-  $(id).style.color = color;
+  const el = $(id);
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = color;
 }
 
 function naira(v) {
@@ -515,7 +518,7 @@ function date(v) {
 
 function node(tag, text, cls) {
   const e = document.createElement(tag);
-  e.textContent = text;
+  e.textContent = text ?? "";
   if (cls) e.className = cls;
   return e;
 }
@@ -525,18 +528,21 @@ function statusClass(s) {
     s === "rejected" ? "rejected" : "pending";
 }
 
+// SHOW LOGIN
 window.showLogin = () => {
   $("registerForm").style.display = "none";
   $("loginForm").style.display = "block";
   msg("authMessage", "");
 };
 
+// SHOW REGISTER
 window.showRegister = () => {
   $("registerForm").style.display = "block";
   $("loginForm").style.display = "none";
   msg("authMessage", "");
 };
 
+// BANK SELECTION
 $("fundBank").addEventListener("change", () => {
   const b = $("fundBank").value;
 
@@ -550,6 +556,7 @@ $("fundBank").addEventListener("change", () => {
   $("bankDetails").style.display = "block";
 });
 
+// CREATE PROFILE
 async function createProfile(u) {
   const m = u.user_metadata || {};
 
@@ -564,6 +571,7 @@ async function createProfile(u) {
   if (error) console.error("Profile upsert:", error.message);
 }
 
+// CHECK ADMIN
 async function checkAdmin(u) {
   $("adminPanel").style.display = "none";
   currentUserIsAdmin = false;
@@ -595,6 +603,7 @@ async function checkAdmin(u) {
   return true;
 }
 
+// LOAD WALLET
 async function loadWallet(u) {
   $("walletBalance").textContent = "Loading...";
 
@@ -622,6 +631,7 @@ async function loadWallet(u) {
   $("walletMessage").textContent = "Your wallet balance";
 }
 
+// LOAD TRANSACTIONS
 async function loadTransactions(u) {
   const box = $("walletTransactions");
   box.textContent = "Loading...";
@@ -636,8 +646,8 @@ async function loadTransactions(u) {
   box.textContent = "";
 
   if (error) {
-    box.append(node("p", "Unable to load transactions: " +
-      error.message, "empty"));
+    box.append(node("p",
+      "Unable to load transactions: " + error.message, "empty"));
     return;
   }
 
@@ -664,6 +674,7 @@ async function loadTransactions(u) {
   });
 }
 
+// LOAD FUNDING HISTORY
 async function loadFundingHistory(u) {
   const box = $("fundingHistory");
   box.textContent = "Loading...";
@@ -678,8 +689,8 @@ async function loadFundingHistory(u) {
   box.textContent = "";
 
   if (error) {
-    box.append(node("p", "Unable to load funding history: " +
-      error.message, "empty"));
+    box.append(node("p",
+      "Unable to load funding history: " + error.message, "empty"));
     return;
   }
 
@@ -712,6 +723,7 @@ async function loadFundingHistory(u) {
   });
 }
 
+// ADMIN FUNDING REQUEST DISPLAY
 function renderAdminRequest(box, r, isTest) {
   const x = node("div", "", "item");
 
@@ -731,7 +743,8 @@ function renderAdminRequest(box, r, isTest) {
     }
   });
 
-  x.append(node("p", "Status: " + r.status, statusClass(r.status)));
+  x.append(node("p",
+    "Status: " + r.status, statusClass(r.status)));
 
   if (r.admin_note) {
     x.append(node("p", "Admin Note: " + r.admin_note));
@@ -741,6 +754,9 @@ function renderAdminRequest(box, r, isTest) {
     const actions = node("div", "", "actions");
     const a = node("button", "Approve");
     const b = node("button", "Reject", "danger");
+
+    a.type = "button";
+    b.type = "button";
 
     a.onclick = () => reviewRequest(r.id, "approve", isTest);
     b.onclick = () => reviewRequest(r.id, "reject", isTest);
@@ -752,6 +768,7 @@ function renderAdminRequest(box, r, isTest) {
   box.append(x);
 }
 
+// LOAD FUNDING REQUEST LIST
 async function loadRequestList({
   table, columns, boxId, messageId, buttonId, isTest
 }) {
@@ -778,12 +795,9 @@ async function loadRequestList({
 
     if (error) {
       console.error(table + " load:", error);
-      box.append(node(
-        "p",
+      box.append(node("p",
         "Unable to load " + (isTest ? "test" : "real") +
-        " requests: " + error.message,
-        "empty"
-      ));
+        " requests: " + error.message, "empty"));
       msg(messageId, "Database error: " + error.message, "red");
       return;
     }
@@ -812,6 +826,7 @@ async function loadRequestList({
   }
 }
 
+// REAL FUNDING REQUESTS
 window.loadAdminFundingRequests = () => loadRequestList({
   table: "wallet_funding_requests",
   columns: "id,user_id,amount,bank,reference,status,created_at,admin_note",
@@ -821,6 +836,7 @@ window.loadAdminFundingRequests = () => loadRequestList({
   isTest: false
 });
 
+// TEST FUNDING REQUESTS
 window.loadTestFundingRequests = () => loadRequestList({
   table: "wallet_funding_test_requests",
   columns: "id,user_id,amount,reference,status,created_at,admin_note",
@@ -830,6 +846,7 @@ window.loadTestFundingRequests = () => loadRequestList({
   isTest: true
 });
 
+// REVIEW FUNDING REQUEST
 async function reviewRequest(id, decision, isTest) {
   if (!window.currentUser || !currentUserIsAdmin) {
     msg(isTest ? "testAdminMessage" : "adminMessage",
@@ -888,6 +905,7 @@ async function reviewRequest(id, decision, isTest) {
       await loadTestFundingRequests();
     } else {
       await loadAdminFundingRequests();
+
       if (window.currentUser) {
         await loadFundingHistory(window.currentUser);
         await loadWallet(window.currentUser);
@@ -901,6 +919,7 @@ async function reviewRequest(id, decision, isTest) {
   }
 }
 
+// SUBMIT FUNDING REQUEST
 window.submitFundingRequest = async () => {
   const u = window.currentUser;
 
@@ -926,7 +945,8 @@ window.submitFundingRequest = async () => {
   }
 
   if (reference.length < 3 || reference.length > 100) {
-    msg("fundMessage", "Reference must be 3–100 characters.", "red");
+    msg("fundMessage",
+      "Reference must be 3–100 characters.", "red");
     return;
   }
 
@@ -976,6 +996,7 @@ window.submitFundingRequest = async () => {
   }
 };
 
+// DISPLAY USER
 async function displayUser(u) {
   if (!u) {
     window.currentUser = null;
@@ -1030,6 +1051,7 @@ async function displayUser(u) {
   ]);
 }
 
+// REGISTER CUSTOMER
 window.registerCustomer = async () => {
   const name = $("regName").value.trim();
   const phone = $("regPhone").value.trim();
@@ -1068,6 +1090,7 @@ window.registerCustomer = async () => {
   }
 };
 
+// LOGIN CUSTOMER
 window.loginCustomer = async () => {
   const email = $("loginEmail").value.trim();
   const password = $("loginPassword").value;
@@ -1091,6 +1114,7 @@ window.loginCustomer = async () => {
   msg("authMessage", "Welcome back!");
 };
 
+// LOGOUT CUSTOMER
 window.logoutCustomer = async () => {
   const { error } = await window.supabase.auth.signOut();
 
@@ -1110,7 +1134,9 @@ window.logoutCustomer = async () => {
     "fundingHistory",
     "adminFundingList",
     "testFundingList"
-  ].forEach(id => $(id).textContent = "");
+  ].forEach(id => {
+    if ($(id)) $(id).textContent = "";
+  });
 
   $("fundMessage").textContent = "";
   $("adminMessage").textContent = "";
@@ -1120,6 +1146,7 @@ window.logoutCustomer = async () => {
   msg("authMessage", "You have logged out.");
 };
 
+// AUTH STATE LISTENER
 window.supabase.auth.onAuthStateChange((event, session) => {
   if (event === "SIGNED_IN" && session?.user) {
     setTimeout(() => displayUser(session.user), 0);
@@ -1130,6 +1157,7 @@ window.supabase.auth.onAuthStateChange((event, session) => {
   }
 });
 
+// RESTORE EXISTING SESSION
 const {
   data: { session },
   error: sessionError
@@ -1145,10 +1173,11 @@ if (session?.user) {
 
 console.log("AL-ILYAS VTU Supabase ready:", !!window.supabase);
 
+
 // CUSTOMER ORDER HISTORY
 window.loadCustomerOrders = async function () {
-  const box = document.getElementById("customerOrdersBox");
-  const message = document.getElementById("customerOrdersMessage");
+  const box = $("customerOrdersBox");
+  const message = $("customerOrdersMessage");
 
   if (!window.currentUser) {
     message.textContent = "Please login to view your orders.";
@@ -1181,24 +1210,19 @@ window.loadCustomerOrders = async function () {
     const item = document.createElement("div");
     item.className = "order-item";
 
-    const details = document.createElement("p");
-    details.textContent =
+    const details = node("p",
       order.service_type.toUpperCase() + " | " +
-      order.network + " | " + order.phone_number;
+      order.network + " | " + order.phone_number);
 
-    const plan = document.createElement("p");
-    plan.textContent = "Plan: " + (order.plan || "N/A");
+    const plan = node("p", "Plan: " + (order.plan || "N/A"));
 
-    const amount = document.createElement("p");
-    amount.textContent = "Amount: ₦" +
-      Number(order.amount).toLocaleString("en-NG");
+    const amount = node("p",
+      "Amount: " + naira(order.amount));
 
-    const status = document.createElement("p");
-    status.textContent = "Status: " + order.status.toUpperCase();
+    const status = node("p",
+      "Status: " + order.status.toUpperCase());
 
-    const time = document.createElement("small");
-    time.textContent =
-      new Date(order.created_at).toLocaleString("en-NG");
+    const time = node("small", date(order.created_at));
 
     item.append(details, plan, amount, status, time);
     box.appendChild(item);
@@ -1218,11 +1242,12 @@ window.updateVtuOrderStatus = async function (orderId, newStatus) {
     return;
   }
 
-  if (!confirm("Change order status to " + newStatus.toUpperCase() + "?")) {
+  if (!confirm("Change order status to " +
+      newStatus.toUpperCase() + "?")) {
     return;
   }
 
-  const message = document.getElementById("adminOrdersMessage");
+  const message = $("adminOrdersMessage");
   message.textContent = "Updating order status...";
 
   try {
@@ -1241,7 +1266,8 @@ window.updateVtuOrderStatus = async function (orderId, newStatus) {
     }
 
     if (!data || data.success !== true) {
-      message.textContent = "The database did not confirm the update.";
+      message.textContent =
+        "The database did not confirm the update.";
       return;
     }
 
@@ -1257,8 +1283,8 @@ window.updateVtuOrderStatus = async function (orderId, newStatus) {
 
 // ADMIN: VIEW ALL CUSTOMER ORDERS
 window.loadAdminOrders = async function () {
-  const box = document.getElementById("adminOrdersBox");
-  const message = document.getElementById("adminOrdersMessage");
+  const box = $("adminOrdersBox");
+  const message = $("adminOrdersMessage");
 
   if (!window.currentUser) {
     message.textContent = "Please login first.";
@@ -1295,32 +1321,29 @@ window.loadAdminOrders = async function () {
     const item = document.createElement("div");
     item.className = "order-item";
 
-    const details = document.createElement("p");
-    details.textContent =
+    const details = node("p",
       order.service_type.toUpperCase() + " | " +
-      order.network + " | " + order.phone_number;
+      order.network + " | " + order.phone_number);
 
-    const plan = document.createElement("p");
-    plan.textContent = "Plan: " + (order.plan || "N/A");
+    const plan = node("p", "Plan: " + (order.plan || "N/A"));
 
-    const amount = document.createElement("p");
-    amount.textContent = "Amount: ₦" +
-      Number(order.amount).toLocaleString("en-NG");
+    const amount = node("p",
+      "Amount: " + naira(order.amount));
 
-    const status = document.createElement("p");
-    status.textContent = "Status: " + order.status.toUpperCase();
+    const status = node("p",
+      "Status: " + order.status.toUpperCase());
 
-    const user = document.createElement("small");
-    user.textContent = "Customer ID: " + order.user_id;
+    const user = node("small",
+      "Customer ID: " + order.user_id);
 
-    const time = document.createElement("small");
-    time.textContent =
-      new Date(order.created_at).toLocaleString("en-NG");
+    const time = node("small", date(order.created_at));
 
     item.append(details, plan, amount, status, user, time);
 
+    // SHOW STATUS BUTTONS ONLY FOR UNFINISHED ORDERS
     if (["pending", "processing"].includes(order.status)) {
       const actions = document.createElement("div");
+      actions.className = "actions";
 
       ["processing", "successful", "failed"].forEach(newStatus => {
         const button = document.createElement("button");
@@ -1328,7 +1351,6 @@ window.loadAdminOrders = async function () {
         button.textContent = newStatus.toUpperCase();
 
         button.onclick = function () {
-          alert("Button clicked: " + newStatus);
           window.updateVtuOrderStatus(order.id, newStatus);
         };
 
@@ -1343,4 +1365,4 @@ window.loadAdminOrders = async function () {
 };
 </script>
 </body>
-</html> 
+</html>

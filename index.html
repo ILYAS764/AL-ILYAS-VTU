@@ -1148,7 +1148,7 @@ if (session?.user) {
 
 console.log("AL-ILYAS VTU Supabase ready:", !!window.supabase);
 
-  // CUSTOMER ORDER HISTORY
+// CUSTOMER ORDER HISTORY
 window.loadCustomerOrders = async function () {
   const box = document.getElementById("customerOrdersBox");
   const message = document.getElementById("customerOrdersMessage");
@@ -1184,10 +1184,6 @@ window.loadCustomerOrders = async function () {
     const item = document.createElement("div");
     item.className = "order-item";
 
-    const date = new Date(order.created_at).toLocaleString("en-NG");
-
-    item.innerHTML = "";
-
     const details = document.createElement("p");
     details.textContent =
       order.service_type.toUpperCase() + " | " +
@@ -1204,22 +1200,61 @@ window.loadCustomerOrders = async function () {
     status.textContent = "Status: " + order.status.toUpperCase();
 
     const time = document.createElement("small");
-    time.textContent = date;
+    time.textContent =
+      new Date(order.created_at).toLocaleString("en-NG");
 
-  const actions = document.createElement("div");
-
-["processing", "successful", "failed"].forEach(newStatus => {
-  const button = document.createElement("button");
-
-  button.textContent = newStatus.toUpperCase();
-  button.onclick = () =>
-    window.updateVtuOrderStatus(order.id, newStatus);
-
-  actions.appendChild(button);
-});
-
-item.append(details, plan, amount, status, user, date, actions);
+    item.append(details, plan, amount, status, time);
+    box.appendChild(item);
   });
+};
+
+
+// ADMIN: UPDATE VTU ORDER STATUS
+window.updateVtuOrderStatus = async function (orderId, newStatus) {
+  if (!window.currentUser || !currentUserIsAdmin) {
+    alert("Admin access required.");
+    return;
+  }
+
+  if (!["processing", "successful", "failed"].includes(newStatus)) {
+    alert("Invalid order status.");
+    return;
+  }
+
+  if (!confirm("Change order status to " + newStatus.toUpperCase() + "?")) {
+    return;
+  }
+
+  const message = document.getElementById("adminOrdersMessage");
+  message.textContent = "Updating order status...";
+
+  try {
+    const { data, error } = await window.supabase.rpc(
+      "admin_update_vtu_order_status",
+      {
+        p_order_id: orderId,
+        p_status: newStatus
+      }
+    );
+
+    if (error) {
+      console.error("Order status error:", error);
+      message.textContent = "Update failed: " + error.message;
+      return;
+    }
+
+    if (!data || data.success !== true) {
+      message.textContent = "The database did not confirm the update.";
+      return;
+    }
+
+    message.textContent = "Order status updated successfully.";
+    await window.loadAdminOrders();
+
+  } catch (e) {
+    console.error(e);
+    message.textContent = "Unexpected error: " + e.message;
+  }
 };
 
 
@@ -1281,99 +1316,31 @@ window.loadAdminOrders = async function () {
     const user = document.createElement("small");
     user.textContent = "Customer ID: " + order.user_id;
 
-    const date = document.createElement("small");
-    date.textContent =
+    const time = document.createElement("small");
+    time.textContent =
       new Date(order.created_at).toLocaleString("en-NG");
 
-    item.append(details, plan, amount, status, user, date);
+    item.append(details, plan, amount, status, user, time);
+
+    if (["pending", "processing"].includes(order.status)) {
+      const actions = document.createElement("div");
+
+      ["processing", "successful", "failed"].forEach(newStatus => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = newStatus.toUpperCase();
+
+        button.onclick = function () {
+          alert("Button clicked: " + newStatus);
+          window.updateVtuOrderStatus(order.id, newStatus);
+        };
+
+        actions.appendChild(button);
+      });
+
+      item.appendChild(actions);
+    }
+
     box.appendChild(item);
   });
 };
-
- // ADMIN: UPDATE VTU ORDER STATUS
-
-window.loadAdminOrders = async function () {
-  const box = document.getElementById("adminOrdersBox");
-  const message = document.getElementById("adminOrdersMessage");
-
-  if (!window.currentUser) {
-    message.textContent = "Please login first.";
-    return;
-  }
-
-  if (!currentUserIsAdmin) {
-    message.textContent = "Access denied. Admin only.";
-    return;
-  }
-
-  message.textContent = "Loading customer orders...";
-  box.innerHTML = "";
-
-  const { data, error } = await window.supabase
-    .from("vtu_orders")
-    .select("id,user_id,service_type,network,phone_number,plan,amount,status,created_at")
-    .order("created_at", { ascending: false })
-    .limit(100);
-
-  if (error) {
-    message.textContent = "Unable to load orders: " + error.message;
-    return;
-  }
-
-  if (!data || data.length === 0) {
-    message.textContent = "No customer orders found.";
-    return;
-  }
-
-  message.textContent = data.length + " customer order(s) found.";
-
-  data.forEach(order => {
-    const item = document.createElement("div");
-    item.className = "order-item";
-
-    const details = document.createElement("p");
-    details.textContent =
-      order.service_type.toUpperCase() + " | " +
-      order.network + " | " + order.phone_number;
-
-    const plan = document.createElement("p");
-    plan.textContent = "Plan: " + (order.plan || "N/A");
-
-    const amount = document.createElement("p");
-    amount.textContent = "Amount: ₦" +
-      Number(order.amount).toLocaleString("en-NG");
-
-    const status = document.createElement("p");
-    status.textContent = "Status: " + order.status.toUpperCase();
-
-    const user = document.createElement("small");
-    user.textContent = "Customer ID: " + order.user_id;
-
-    const date = document.createElement("small");
-    date.textContent =
-      new Date(order.created_at).toLocaleString("en-NG");
-
-    // ADMIN STATUS BUTTONS
-    const actions = document.createElement("div");
-
-    ["processing", "successful", "failed"].forEach(newStatus => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = newStatus.toUpperCase();
-
-     button.onclick = function () 
-  alert("Button clicked: " + newStatus);
-
-  window.updateVtuOrderStatus(order.id, newStatus);
-      };
-
-      actions.appendChild(button);
-    });
-
-    item.append(details, plan, amount, status, user, date, actions);
-    box.appendChild(item);
-  });
-};
-</script>
-</body>
-</html>

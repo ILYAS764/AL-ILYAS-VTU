@@ -265,6 +265,9 @@ if(SUPABASE_URL.startsWith("PASTE_")||SUPABASE_KEY.startsWith("PASTE_")){
 }
 window.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 window.currentUser=null;
+  window.addEventListener("load", () => {
+  console.log("Supabase client:", !!window.supabase);
+});
 let displayedUserId=null,currentUserIsAdmin=false;
 const $=id=>document.getElementById(id);
 const bankAccounts={OPay:"6458790287",Moniepoint:"8136438501"};

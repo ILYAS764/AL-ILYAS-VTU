@@ -63,8 +63,22 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}#dashboard,#adminPanel{displ
 <span class="admin-label">ADMIN ACCESS</span><h2 style="margin-bottom:8px">⚙️ Admin Dashboard</h2>
 <p>Manage real customer funding requests and separate test requests.</p>
 <p><b>Admin:</b> <span id="adminEmail"></span></p>
+
+ <!-- CUSTOMER ORDER HISTORY -->
+<section class="card" id="customerOrdersSection">
+  <h2>My Order History</h2>
+  <p>View your Data and Airtime orders.</p>
+
+  <button onclick="loadCustomerOrders()">
+    Refresh My Orders
+  </button>
+
+  <div id="customerOrdersMessage"></div>
+  <div id="customerOrdersBox"></div>
+</section> 
 </div>
 
+  
 <h3 style="color:#087c45">📥 REAL Customer Funding Requests</h3>
 <div class="notice"><b>Important:</b> Verify that money has actually arrived in OPay/Moniepoint before approving a REAL request. A reference alone is not proof of payment.</div>
 <button class="full" id="refreshAdminButton" onclick="loadAdminFundingRequests()">Refresh Real Requests</button>
@@ -128,7 +142,20 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}#dashboard,#adminPanel{displ
 <button class="full" onclick="saveSettings()">Save Settings</button>
 <div class="notice">Do not use these browser-only prices to control real VTU transactions.</div>
 </section>
+  <!-- ADMIN ALL ORDERS -->
+<section class="card" id="adminOrdersSection">
+  <h2>All Customer Orders</h2>
+  <p>Manage and monitor customer orders.</p>
+
+  <button onclick="loadAdminOrders()">
+    Refresh All Orders
+  </button>
+
+  <div id="adminOrdersMessage"></div>
+  <div id="adminOrdersBox"></div>
+</section>
 </main>
+  
 <footer><h3>AL-ILYAS VTU</h3><p>Fast, Reliable and Affordable Services.</p><p>© 2026 AL-ILYAS VTU</p></footer>
   
 <script>
@@ -1120,6 +1147,137 @@ if (session?.user) {
 }
 
 console.log("AL-ILYAS VTU Supabase ready:", !!window.supabase);
+
+  // CUSTOMER ORDER HISTORY
+window.loadCustomerOrders = async function () {
+  const box = document.getElementById("customerOrdersBox");
+  const message = document.getElementById("customerOrdersMessage");
+
+  if (!window.currentUser) {
+    message.textContent = "Please login to view your orders.";
+    return;
+  }
+
+  message.textContent = "Loading your orders...";
+  box.innerHTML = "";
+
+  const { data, error } = await window.supabase
+    .from("vtu_orders")
+    .select("id,service_type,network,phone_number,plan,amount,status,created_at")
+    .eq("user_id", window.currentUser.id)
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (error) {
+    message.textContent = "Unable to load orders: " + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    message.textContent = "You have not placed any orders yet.";
+    return;
+  }
+
+  message.textContent = data.length + " order(s) found.";
+
+  data.forEach(order => {
+    const item = document.createElement("div");
+    item.className = "order-item";
+
+    const date = new Date(order.created_at).toLocaleString("en-NG");
+
+    item.innerHTML = "";
+
+    const details = document.createElement("p");
+    details.textContent =
+      order.service_type.toUpperCase() + " | " +
+      order.network + " | " + order.phone_number;
+
+    const plan = document.createElement("p");
+    plan.textContent = "Plan: " + (order.plan || "N/A");
+
+    const amount = document.createElement("p");
+    amount.textContent = "Amount: ₦" +
+      Number(order.amount).toLocaleString("en-NG");
+
+    const status = document.createElement("p");
+    status.textContent = "Status: " + order.status.toUpperCase();
+
+    const time = document.createElement("small");
+    time.textContent = date;
+
+    item.append(details, plan, amount, status, time);
+    box.appendChild(item);
+  });
+};
+
+
+// ADMIN: VIEW ALL CUSTOMER ORDERS
+window.loadAdminOrders = async function () {
+  const box = document.getElementById("adminOrdersBox");
+  const message = document.getElementById("adminOrdersMessage");
+
+  if (!window.currentUser) {
+    message.textContent = "Please login first.";
+    return;
+  }
+
+  if (!currentUserIsAdmin) {
+    message.textContent = "Access denied. Admin only.";
+    return;
+  }
+
+  message.textContent = "Loading customer orders...";
+  box.innerHTML = "";
+
+  const { data, error } = await window.supabase
+    .from("vtu_orders")
+    .select("id,user_id,service_type,network,phone_number,plan,amount,status,created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    message.textContent = "Unable to load orders: " + error.message;
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    message.textContent = "No customer orders found.";
+    return;
+  }
+
+  message.textContent = data.length + " customer order(s) found.";
+
+  data.forEach(order => {
+    const item = document.createElement("div");
+    item.className = "order-item";
+
+    const details = document.createElement("p");
+    details.textContent =
+      order.service_type.toUpperCase() + " | " +
+      order.network + " | " + order.phone_number;
+
+    const plan = document.createElement("p");
+    plan.textContent = "Plan: " + (order.plan || "N/A");
+
+    const amount = document.createElement("p");
+    amount.textContent = "Amount: ₦" +
+      Number(order.amount).toLocaleString("en-NG");
+
+    const status = document.createElement("p");
+    status.textContent = "Status: " + order.status.toUpperCase();
+
+    const user = document.createElement("small");
+    user.textContent = "Customer ID: " + order.user_id;
+
+    const date = document.createElement("small");
+    date.textContent =
+      new Date(order.created_at).toLocaleString("en-NG");
+
+    item.append(details, plan, amount, status, user, date);
+    box.appendChild(item);
+  });
+};
 </script>
 </body>
 </html>

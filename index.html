@@ -1291,45 +1291,88 @@ window.loadAdminOrders = async function () {
 };
 
  // ADMIN: UPDATE VTU ORDER STATUS
-window.updateVtuOrderStatus = async function (orderId, newStatus) {
-  if (!window.currentUser || !currentUserIsAdmin) {
-    alert("Admin access required.");
+
+window.loadAdminOrders = async function () {
+  const box = document.getElementById("adminOrdersBox");
+  const message = document.getElementById("adminOrdersMessage");
+
+  if (!window.currentUser) {
+    message.textContent = "Please login first.";
     return;
   }
 
-  const allowedStatuses = ["processing", "successful", "failed"];
-
-  if (!allowedStatuses.includes(newStatus)) {
-    alert("Invalid order status.");
+  if (!currentUserIsAdmin) {
+    message.textContent = "Access denied. Admin only.";
     return;
   }
 
-  const confirmed = confirm(
-    "Are you sure you want to change this order to " +
-    newStatus.toUpperCase() + "?"
-  );
+  message.textContent = "Loading customer orders...";
+  box.innerHTML = "";
 
-  if (!confirmed) return;
-
-  const { data, error } = await window.supabase.rpc(
-    "admin_update_vtu_order_status",
-    {
-      p_order_id: orderId,
-      p_status: newStatus
-    }
-  );
+  const { data, error } = await window.supabase
+    .from("vtu_orders")
+    .select("id,user_id,service_type,network,phone_number,plan,amount,status,created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   if (error) {
-    alert("Unable to update order: " + error.message);
+    message.textContent = "Unable to load orders: " + error.message;
     return;
   }
 
-  alert("Order status updated successfully.");
-
-  if (window.loadAdminOrders) {
-    await window.loadAdminOrders();
+  if (!data || data.length === 0) {
+    message.textContent = "No customer orders found.";
+    return;
   }
+
+  message.textContent = data.length + " customer order(s) found.";
+
+  data.forEach(order => {
+    const item = document.createElement("div");
+    item.className = "order-item";
+
+    const details = document.createElement("p");
+    details.textContent =
+      order.service_type.toUpperCase() + " | " +
+      order.network + " | " + order.phone_number;
+
+    const plan = document.createElement("p");
+    plan.textContent = "Plan: " + (order.plan || "N/A");
+
+    const amount = document.createElement("p");
+    amount.textContent = "Amount: ₦" +
+      Number(order.amount).toLocaleString("en-NG");
+
+    const status = document.createElement("p");
+    status.textContent = "Status: " + order.status.toUpperCase();
+
+    const user = document.createElement("small");
+    user.textContent = "Customer ID: " + order.user_id;
+
+    const date = document.createElement("small");
+    date.textContent =
+      new Date(order.created_at).toLocaleString("en-NG");
+
+    // ADMIN STATUS BUTTONS
+    const actions = document.createElement("div");
+
+    ["processing", "successful", "failed"].forEach(newStatus => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = newStatus.toUpperCase();
+
+      button.onclick = () => {
+        window.updateVtuOrderStatus(order.id, newStatus);
+      };
+
+      actions.appendChild(button);
+    });
+
+    item.append(details, plan, amount, status, user, date, actions);
+    box.appendChild(item);
+  });
 };
+
 </script>
 </body>
 </html>

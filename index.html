@@ -635,48 +635,37 @@ async function createProfile(u) {
  
 const adminDataPlansSection = $("adminDataPlansSection");
  
-// CHECK ADMIN
-async function checkAdmin(u) {
-  $("adminPanel").style.display = "none";
-  currentUserIsAdmin = false;
+// CHECK ADMIN                        
+ async function checkAdmin(u) {
+$("adminPanel").style.display = "none";
+currentUserIsAdmin = false;
 
-  if (adminDataPlansSection) {
-    adminDataPlansSection.style.display = "none";
-  }
+if (!u) return false;
 
-  if (!u) return false;
+const { data, error } = await window.supabase
+.from("admin_users")
+.select("user_id")
+.eq("user_id", u.id)
+.maybeSingle();
 
-  const { data, error } = await window.supabase
-    .from("admin_users")
-    .select("user_id")
-    .eq("user_id", u.id)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Admin check:", error.message);
-    return false;
-  }
-
-  if (!data) return false;
-
-  currentUserIsAdmin = true;
-
-  $("adminPanel").style.display = "block";
-  $("adminEmail").textContent = u.email || "Admin";
-
-  if (adminDataPlansSection) {
-    adminDataPlansSection.style.display = "block";
-  }
-
-  await Promise.all([
-    loadAdminFundingRequests(),
-    loadTestFundingRequests(),
-    loadAdminDataPlans()
-  ]);
-
-  return true;
+if (error) {
+console.error("Admin check:", error.message);
+return false;
 }
 
+if (!data) return false;
+
+currentUserIsAdmin = true;
+$("adminPanel").style.display = "block";
+$("adminEmail").textContent = u.email || "Admin";
+
+await Promise.all([
+loadAdminFundingRequests(),
+loadTestFundingRequests()
+]);
+
+return true;
+}
 // LOAD TRANSACTIONS
 async function loadTransactions(u) {
   const box = $("walletTransactions");

@@ -142,6 +142,68 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}#dashboard,#adminPanel{displ
 <button class="full" onclick="saveSettings()">Save Settings</button>
 <div class="notice">Do not use these browser-only prices to control real VTU transactions.</div>
 </section>
+ 
+<section class="card" id="adminDataPlansSection">
+  <h2>📦 Admin Data Plan Manager</h2>
+  <p>Add and manage data plans and their prices.</p>
+
+  <form id="dataPlanForm">
+    <input type="hidden" id="editPlanId">
+
+    <label>Network</label>
+    <select id="planNetwork" required>
+      <option value="MTN">MTN</option>
+      <option value="Airtel">Airtel</option>
+      <option value="Glo">Glo</option>
+      <option value="9mobile">9mobile</option>
+    </select>
+
+    <label>Plan Code</label>
+    <input id="planCode" type="text"
+      placeholder="e.g. MTN-1GB-30D" required>
+
+    <label>Plan Name</label>
+    <input id="planName" type="text"
+      placeholder="e.g. 1GB Monthly" required>
+
+    <label>Validity</label>
+    <input id="planValidity" type="text"
+      placeholder="e.g. 30 Days">
+
+    <label>Provider Cost (₦)</label>
+    <input id="providerCost" type="number"
+      min="0.01" step="0.01" required>
+
+    <label>Custom Selling Price (₦)</label>
+    <input id="customPrice" type="number"
+      min="0.01" step="0.01"
+      placeholder="Leave empty to use network markup">
+
+    <label>
+      <input id="planActive" type="checkbox" checked>
+      Active Plan
+    </label>
+
+    <button type="submit" class="full">
+      Save Data Plan
+    </button>
+
+    <button type="button" id="cancelPlanEdit"
+      class="full" style="display:none">
+      Cancel Edit
+    </button>
+  </form>
+
+  <p id="dataPlanMessage" class="notice"></p>
+
+  <h3>Existing Data Plans</h3>
+  <button type="button" id="refreshDataPlans">
+    Refresh Plans
+  </button>
+
+  <div id="adminDataPlansList"></div>
+</section>
+
   <!-- ADMIN ALL ORDERS -->
 <section class="card" id="adminOrdersSection">
   <h2>All Customer Orders</h2>
@@ -570,11 +632,17 @@ async function createProfile(u) {
 
   if (error) console.error("Profile upsert:", error.message);
 }
-
+ 
+const adminDataPlansSection = $("adminDataPlansSection");
+ 
 // CHECK ADMIN
 async function checkAdmin(u) {
   $("adminPanel").style.display = "none";
   currentUserIsAdmin = false;
+
+  if (adminDataPlansSection) {
+    adminDataPlansSection.style.display = "none";
+  }
 
   if (!u) return false;
 
@@ -592,43 +660,21 @@ async function checkAdmin(u) {
   if (!data) return false;
 
   currentUserIsAdmin = true;
+
   $("adminPanel").style.display = "block";
   $("adminEmail").textContent = u.email || "Admin";
 
+  if (adminDataPlansSection) {
+    adminDataPlansSection.style.display = "block";
+  }
+
   await Promise.all([
     loadAdminFundingRequests(),
-    loadTestFundingRequests()
+    loadTestFundingRequests(),
+    loadAdminDataPlans()
   ]);
 
   return true;
-}
-
-// LOAD WALLET
-async function loadWallet(u) {
-  $("walletBalance").textContent = "Loading...";
-
-  const { data, error } = await window.supabase
-    .from("wallets")
-    .select("balance")
-    .eq("user_id", u.id)
-    .maybeSingle();
-
-  if (error) {
-    $("walletBalance").textContent = "Unavailable";
-    $("walletMessage").textContent =
-      "Unable to load wallet: " + error.message;
-    return;
-  }
-
-  if (!data) {
-    $("walletBalance").textContent = "₦0.00";
-    $("walletMessage").textContent =
-      "Wallet record not found. Contact support.";
-    return;
-  }
-
-  $("walletBalance").textContent = naira(data.balance);
-  $("walletMessage").textContent = "Your wallet balance";
 }
 
 // LOAD TRANSACTIONS
@@ -1363,6 +1409,239 @@ window.loadAdminOrders = async function () {
     box.appendChild(item);
   });
 };
+
+ 
+/* ================================
+   ADMIN DATA PLAN MANAGER
+================================ */
+
+const dataPlanForm = $("dataPlanForm");
+const dataPlanMessage = $("dataPlanMessage");
+const adminDataPlansList = $("adminDataPlansList");
+const adminDataPlansSection = $("adminDataPlansSection");
+
+if (adminDataPlansSection) {
+  adminDataPlansSection.style.display = "none";
+}
+
+function showPlanMessage(message, isError = false) {
+  dataPlanMessage.textContent = message;
+  dataPlanMessage.style.color = isError ? "red" : "green";
+}
+
+function escapePlanText(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[char]);
+}
+
+function resetPlanForm() {
+  dataPlanForm.reset();
+  $("editPlanId").value = "";
+  $("planActive").checked = true;
+  $("cancelPlanEdit").style.display = "none";
+  dataPlanForm.querySelector('button[type="submit"]').textContent =
+    "Save Data Plan";
+}
+
+async function loadAdminDataPlans() {
+  if (!currentUserIsAdmin) return;
+
+  adminDataPlansList.textContent = "Loading plans...";
+
+  const { data: plans, error } = await window.supabase
+    .from("vtu_data_plans")
+    .select("*")
+    .order("network")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    adminDataPlansList.textContent = "Could not load plans: " + error.message;
+    return;
+  }
+
+  const { data: pricing, error: pricingError } = await window.supabase
+    .from("vtu_network_pricing")
+    .select("network, data_markup_percent");
+
+  if (pricingError) {
+    adminDataPlansList.textContent =
+      "Could not load network pricing: " + pricingError.message;
+    return;
+  }
+
+  const markupMap = Object.fromEntries(
+    (pricing || []).map(item => [
+      item.network,
+      Number(item.data_markup_percent)
+    ])
+  );
+
+  if (!plans || plans.length === 0) {
+    adminDataPlansList.textContent = "No data plans added yet.";
+    return;
+  }
+
+  adminDataPlansList.innerHTML = plans.map(plan => {
+    const cost = Number(plan.provider_cost);
+    const selling = plan.custom_selling_price !== null
+      ? Number(plan.custom_selling_price)
+      : cost * (1 + (markupMap[plan.network] || 0) / 100);
+
+    const profit = selling - cost;
+
+    return `
+      <div class="card" style="margin-top:12px">
+        <h3>${escapePlanText(plan.network)} - ${escapePlanText(plan.plan_name)}</h3>
+        <p>Code: ${escapePlanText(plan.plan_code)}</p>
+        <p>Validity: ${escapePlanText(plan.validity || "Not specified")}</p>
+        <p>Provider Cost: ₦${cost.toFixed(2)}</p>
+        <p>Selling Price: ₦${selling.toFixed(2)}</p>
+        <p>Estimated Profit: ₦${profit.toFixed(2)}</p>
+        <p>Status: ${plan.is_active ? "Active" : "Inactive"}</p>
+        <button type="button" data-plan-edit="${plan.id}">Edit</button>
+        <button type="button" data-plan-delete="${plan.id}">Delete</button>
+      </div>
+    `;
+  }).join("");
+}
+
+dataPlanForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (!currentUserIsAdmin || !window.currentUser) {
+    showPlanMessage("Admin access required.", true);
+    return;
+  }
+
+  const editId = $("editPlanId").value;
+
+  const providerCost = Number($("providerCost").value);
+  const customInput = $("customPrice").value.trim();
+  const customPrice = customInput === "" ? null : Number(customInput);
+
+  if (!Number.isFinite(providerCost) || providerCost <= 0) {
+    showPlanMessage("Enter a valid provider cost.", true);
+    return;
+  }
+
+  if (customPrice !== null &&
+      (!Number.isFinite(customPrice) || customPrice <= 0)) {
+    showPlanMessage("Enter a valid selling price or leave it empty.", true);
+    return;
+  }
+
+  const plan = {
+    network: $("planNetwork").value,
+    plan_code: $("planCode").value.trim(),
+    plan_name: $("planName").value.trim(),
+    validity: $("planValidity").value.trim() || null,
+    provider_cost: providerCost,
+    custom_selling_price: customPrice,
+    is_active: $("planActive").checked,
+    updated_at: new Date().toISOString()
+  };
+
+  if (!plan.plan_code || !plan.plan_name) {
+    showPlanMessage("Plan code and plan name are required.", true);
+    return;
+  }
+
+  const submitButton = dataPlanForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+
+  try {
+    let result;
+
+    if (editId) {
+      result = await window.supabase
+        .from("vtu_data_plans")
+        .update(plan)
+        .eq("id", editId);
+    } else {
+      result = await window.supabase
+        .from("vtu_data_plans")
+        .insert(plan);
+    }
+
+    if (result.error) throw result.error;
+
+    showPlanMessage(editId ? "Plan updated successfully." :
+      "New plan added successfully.");
+
+    resetPlanForm();
+    await loadAdminDataPlans();
+
+  } catch (error) {
+    showPlanMessage(error.message || "Could not save plan.", true);
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+adminDataPlansList.addEventListener("click", async event => {
+  if (!currentUserIsAdmin) return;
+
+  const editButton = event.target.closest("[data-plan-edit]");
+  const deleteButton = event.target.closest("[data-plan-delete]");
+
+  if (editButton) {
+    const id = editButton.dataset.planEdit;
+
+    const { data: plan, error } = await window.supabase
+      .from("vtu_data_plans")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      showPlanMessage(error.message, true);
+      return;
+    }
+
+    $("editPlanId").value = plan.id;
+    $("planNetwork").value = plan.network;
+    $("planCode").value = plan.plan_code;
+    $("planName").value = plan.plan_name;
+    $("planValidity").value = plan.validity || "";
+    $("providerCost").value = plan.provider_cost;
+    $("customPrice").value = plan.custom_selling_price ?? "";
+    $("planActive").checked = plan.is_active;
+
+    $("cancelPlanEdit").style.display = "block";
+    dataPlanForm.querySelector('button[type="submit"]').textContent =
+      "Update Data Plan";
+
+    dataPlanForm.scrollIntoView({ behavior: "smooth" });
+  }
+
+  if (deleteButton) {
+    const id = deleteButton.dataset.planDelete;
+
+    if (!confirm("Are you sure you want to delete this plan?")) return;
+
+    const { error } = await window.supabase
+      .from("vtu_data_plans")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      showPlanMessage(error.message, true);
+      return;
+    }
+
+    showPlanMessage("Plan deleted successfully.");
+    await loadAdminDataPlans();
+  }
+});
+
+$("cancelPlanEdit").addEventListener("click", resetPlanForm);
+$("refreshDataPlans").addEventListener("click", loadAdminDataPlans);
+
 </script>
 </body>
 </html>

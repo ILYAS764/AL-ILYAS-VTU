@@ -220,7 +220,38 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}#dashboard,#adminPanel{displ
   
 <footer><h3>AL-ILYAS VTU</h3><p>Fast, Reliable and Affordable Services.</p><p>© 2026 AL-ILYAS VTU</p></footer>
   
-<script>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+/* =========================================
+   AL-ILYAS VTU — MAIN JAVASCRIPT
+========================================= */
+
+const SUPABASE_URL = "https://bfmsbdgjdaiqmypcuxce.supabase.co";
+const SUPABASE_KEY = "sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
+
+if (!SUPABASE_KEY || SUPABASE_KEY === "YOUR_PUBLIC_SUPABASE_KEY") {
+  const el = document.getElementById("authMessage");
+  if (el) el.textContent = "Please add your Supabase Publishable key.";
+  throw new Error("Supabase key is missing.");
+}
+
+window.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+window.currentUser = null;
+
+const $ = id => document.getElementById(id);
+
+let currentUserIsAdmin = false;
+let displayedUserId = null;
+
+const adminDataPlansSection = $("adminDataPlansSection");
+
+const bankAccounts = {
+  OPay: "6458790287",
+  Moniepoint: "8136438501"
+};
+
 const defaultPrices = {
   MTN: {"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
   Airtel: {"500MB":150,"1GB":300,"2GB":600,"5GB":1500},
@@ -231,91 +262,134 @@ const defaultPrices = {
 let prices = JSON.parse(JSON.stringify(defaultPrices));
 let airtimeDiscount = 2;
 
-const $ = id => document.getElementById(id);
+/* =========================================
+   GENERAL HELPERS
+========================================= */
 
-function validPhone(p) {
-  return /^\d{11}$/.test(p);
+function msg(id, text, color = "#087c45") {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = text;
+  el.style.color = color;
 }
 
-function updateDataPlans() {
-  const n = $("dataNetwork").value;
-  const s = $("dataPlan");
+function naira(value) {
+  const n = Number(value);
+  return "₦" + (Number.isFinite(n) ? n : 0).toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
 
-  s.innerHTML = '<option value="">Select Data Plan</option>';
+function date(value) {
+  const d = new Date(value);
+  return isNaN(d) ? "Not available" : d.toLocaleString("en-NG");
+}
+
+function node(tag, text, cls) {
+  const el = document.createElement(tag);
+  el.textContent = text ?? "";
+  if (cls) el.className = cls;
+  return el;
+}
+
+function validPhone(phone) {
+  return /^\d{11}$/.test(phone);
+}
+
+function statusClass(status) {
+  return status === "approved" ? "approved" :
+    status === "rejected" ? "rejected" : "pending";
+}
+
+function showSummary(id, title, lines) {
+  const box = $(id);
+  if (!box) return;
+
+  box.style.display = "block";
+  box.textContent = "";
+
+  box.appendChild(node("h3", title));
+
+  lines.forEach(line => {
+    box.appendChild(node("p", line));
+  });
+}
+
+/* =========================================
+   DATA PLAN DISPLAY — DEMO PRICES
+========================================= */
+
+function updateDataPlans() {
+  const network = $("dataNetwork");
+  const planSelect = $("dataPlan");
+  if (!network || !planSelect) return;
+
+  const n = network.value;
+  planSelect.innerHTML = '<option value="">Select Data Plan</option>';
 
   if (!n || !prices[n]) {
-    $("dataPrice").textContent = "₦0";
+    if ($("dataPrice")) $("dataPrice").textContent = "₦0";
     return;
   }
 
-  Object.keys(prices[n]).forEach(k => {
-    const o = document.createElement("option");
-    o.value = k;
-    o.textContent = k;
-    s.appendChild(o);
+  Object.keys(prices[n]).forEach(plan => {
+    const option = document.createElement("option");
+    option.value = plan;
+    option.textContent = plan;
+    planSelect.appendChild(option);
   });
 
   updateDataPrice();
 }
 
 function updateDataPrice() {
-  const n = $("dataNetwork").value;
-  const p = $("dataPlan").value;
-  const price = prices[n]?.[p];
+  const n = $("dataNetwork")?.value;
+  const p = $("dataPlan")?.value;
+  const price = Number(prices[n]?.[p]);
 
-  $("dataPrice").textContent =
-    n && p && price ? "₦" + price.toLocaleString("en-NG") : "₦0";
+  if ($("dataPrice")) {
+    $("dataPrice").textContent =
+      n && p && price > 0 ? naira(price) : "₦0";
+  }
 }
 
-$("dataNetwork").addEventListener("change", updateDataPlans);
-$("dataPlan").addEventListener("change", updateDataPrice);
-
-function showSummary(id, title, lines) {
-  const box = $(id);
-  box.style.display = "block";
-  box.textContent = "";
-
-  const h = document.createElement("h3");
-  h.textContent = title;
-  box.appendChild(h);
-
-  lines.forEach(t => {
-    const p = document.createElement("p");
-    p.textContent = t;
-    box.appendChild(p);
-  });
+if ($("dataNetwork")) {
+  $("dataNetwork").addEventListener("change", updateDataPlans);
+}
+if ($("dataPlan")) {
+  $("dataPlan").addEventListener("change", updateDataPrice);
 }
 
-async function buyData() {
+window.updateDataPlans = updateDataPlans;
+window.updateDataPrice = updateDataPrice;
+
+/* =========================================
+   BUY DATA — SAVES PENDING ORDER
+========================================= */
+
+window.buyData = async function () {
   const u = window.currentUser;
   const client = window.supabase;
 
   if (!u) {
     alert("Please login before ordering.");
-    $("authCard").scrollIntoView();
+    $("authCard")?.scrollIntoView();
     return;
   }
 
-  if (!client) {
-    alert("Supabase is not ready. Please refresh the page.");
-    return;
-  }
+  const n = $("dataNetwork")?.value;
+  const phone = $("dataPhone")?.value.trim();
+  const plan = $("dataPlan")?.value;
+  const price = Number(prices[n]?.[plan]);
 
-  const n = $("dataNetwork").value;
-  const p = $("dataPhone").value.trim();
-  const s = $("dataPlan").value;
-  const price = Number(prices[n]?.[s]);
-
-  if (!n || !s || !validPhone(p) ||
+  if (!n || !plan || !validPhone(phone) ||
       !Number.isFinite(price) || price <= 0) {
     alert("Enter a valid phone number, network and plan.");
     return;
   }
 
-  const btn = document.querySelector(
-    'button[onclick="buyData()"]'
-  );
-
+  const btn = document.querySelector('button[onclick="buyData()"]');
   if (btn) {
     btn.disabled = true;
     btn.textContent = "Saving Order...";
@@ -328,8 +402,8 @@ async function buyData() {
         user_id: u.id,
         service_type: "data",
         network: n,
-        phone_number: p,
-        plan: s,
+        phone_number: phone,
+        plan: plan,
         amount: price,
         status: "pending"
       })
@@ -341,87 +415,95 @@ async function buyData() {
     showSummary("dataSummary", "Data Order Summary", [
       "Order ID: " + data.id,
       "Network: " + n,
-      "Phone: " + p,
-      "Plan: " + s,
-      "Amount: ₦" + price,
+      "Phone: " + phone,
+      "Plan: " + plan,
+      "Amount: " + naira(price),
       "Status: Pending",
       "No payment or data delivery has occurred."
     ]);
 
+    if (window.loadCustomerOrders) {
+      await window.loadCustomerOrders();
+    }
+
   } catch (error) {
-    console.error("Data order error:", error);
-    alert("Unable to save data order: " + error.message);
+    console.error("Data order:", error);
+    alert("Unable to save order: " + error.message);
   } finally {
     if (btn) {
       btn.disabled = false;
       btn.textContent = "Continue Data Order";
     }
   }
-}
+};
+
+/* =========================================
+   AIRTIME — DEMO DISCOUNT
+========================================= */
 
 function calcAirtime() {
-  const a = Number($("airAmount").value);
+  const amount = Number($("airAmount")?.value);
 
-  if (!Number.isSafeInteger(a) || a < 50 || a > 100000) {
-    $("discountValue").textContent = "₦0";
-    $("payable").textContent = "₦0";
+  if (!Number.isSafeInteger(amount) || amount < 50 || amount > 100000) {
+    if ($("discountValue")) $("discountValue").textContent = "₦0";
+    if ($("payable")) $("payable").textContent = "₦0";
     return;
   }
 
-  const d = a * airtimeDiscount / 100;
+  const discount = amount * airtimeDiscount / 100;
+  const payable = amount - discount;
 
-  $("discountValue").textContent = "₦" + d.toFixed(2);
-  $("payable").textContent = "₦" + (a - d).toFixed(2);
+  if ($("discountValue")) {
+    $("discountValue").textContent = naira(discount);
+  }
+  if ($("payable")) {
+    $("payable").textContent = naira(payable);
+  }
 }
 
-$("airAmount").addEventListener("input", calcAirtime);
+if ($("airAmount")) {
+  $("airAmount").addEventListener("input", calcAirtime);
+}
 
-async function buyAirtime() {
+window.calcAirtime = calcAirtime;
+
+window.buyAirtime = async function () {
   const u = window.currentUser;
-  const client = window.supabase;
 
   if (!u) {
     alert("Please login before ordering.");
-    $("authCard").scrollIntoView();
+    $("authCard")?.scrollIntoView();
     return;
   }
 
-  if (!client) {
-    alert("Supabase is not ready. Please refresh the page.");
-    return;
-  }
+  const network = $("airNetwork")?.value;
+  const phone = $("airPhone")?.value.trim();
+  const amount = Number($("airAmount")?.value);
 
-  const n = $("airNetwork").value;
-  const p = $("airPhone").value.trim();
-  const a = Number($("airAmount").value);
-
-  if (!n || !validPhone(p) ||
-      !Number.isSafeInteger(a) || a < 50 || a > 100000) {
+  if (!network || !validPhone(phone) ||
+      !Number.isSafeInteger(amount) || amount < 50 || amount > 100000) {
     alert("Enter valid airtime details.");
     return;
   }
 
-  const d = a * airtimeDiscount / 100;
-  const payable = a - d;
+  const discount = amount * airtimeDiscount / 100;
+  const payable = amount - discount;
 
-  const btn = document.querySelector(
-    'button[onclick="buyAirtime()"]'
-  );
-
+  const btn = document.querySelector('button[onclick="buyAirtime()"]');
   if (btn) {
     btn.disabled = true;
     btn.textContent = "Saving Order...";
   }
 
   try {
-    const { data, error } = await client
+    const { data, error } = await window.supabase
       .from("vtu_orders")
       .insert({
         user_id: u.id,
         service_type: "airtime",
-        network: n,
-        phone_number: p,
-        plan: "Airtime ₦" + a + " (" + airtimeDiscount + "% discount)",
+        network,
+        phone_number: phone,
+        plan: "Airtime ₦" + amount,
         amount: payable,
         status: "pending"
       })
@@ -432,18 +514,22 @@ async function buyAirtime() {
 
     showSummary("airSummary", "Airtime Order Summary", [
       "Order ID: " + data.id,
-      "Network: " + n,
-      "Phone: " + p,
-      "Airtime Value: ₦" + a,
+      "Network: " + network,
+      "Phone: " + phone,
+      "Airtime Value: " + naira(amount),
       "Discount: " + airtimeDiscount + "%",
-      "Discount Value: ₦" + d.toFixed(2),
-      "Customer Pays: ₦" + payable.toFixed(2),
+      "Discount Value: " + naira(discount),
+      "Customer Pays: " + naira(payable),
       "Status: Pending",
       "No payment or airtime delivery has occurred."
     ]);
 
+    if (window.loadCustomerOrders) {
+      await window.loadCustomerOrders();
+    }
+
   } catch (error) {
-    console.error("Airtime order error:", error);
+    console.error("Airtime order:", error);
     alert("Unable to save airtime order: " + error.message);
   } finally {
     if (btn) {
@@ -451,53 +537,61 @@ async function buyAirtime() {
       btn.textContent = "Continue Airtime Order";
     }
   }
-}
+};
+
+/* =========================================
+   DEMO ADMIN SETTINGS
+========================================= */
 
 function loadSettings() {
-  const p = prices[$("adminNetwork").value];
-
+  const network = $("adminNetwork")?.value;
+  const p = prices[network];
   if (!p) return;
 
-  $("p500").value = p["500MB"];
-  $("p1").value = p["1GB"];
-  $("p2").value = p["2GB"];
-  $("p5").value = p["5GB"];
-  $("adminDiscount").value = airtimeDiscount;
+  if ($("p500")) $("p500").value = p["500MB"];
+  if ($("p1")) $("p1").value = p["1GB"];
+  if ($("p2")) $("p2").value = p["2GB"];
+  if ($("p5")) $("p5").value = p["5GB"];
+  if ($("adminDiscount")) $("adminDiscount").value = airtimeDiscount;
 }
 
-$("adminNetwork").addEventListener("change", loadSettings);
+if ($("adminNetwork")) {
+  $("adminNetwork").addEventListener("change", loadSettings);
+}
 
-function saveSettings() {
-  const v = {
-    "500MB": Number($("p500").value),
-    "1GB": Number($("p1").value),
-    "2GB": Number($("p2").value),
-    "5GB": Number($("p5").value)
+window.saveSettings = function () {
+  const network = $("adminNetwork")?.value;
+
+  const values = {
+    "500MB": Number($("p500")?.value),
+    "1GB": Number($("p1")?.value),
+    "2GB": Number($("p2")?.value),
+    "5GB": Number($("p5")?.value)
   };
 
-  const d = Number($("adminDiscount").value);
+  const discount = Number($("adminDiscount")?.value);
 
-  if (!Object.values(v).every(
-    x => Number.isSafeInteger(x) && x > 0
-  ) || !Number.isFinite(d) || d < 0 || d > 100) {
+  if (!prices[network] ||
+      !Object.values(values).every(x => Number.isSafeInteger(x) && x > 0) ||
+      !Number.isFinite(discount) || discount < 0 || discount > 100) {
     alert("Enter valid prices and discount.");
     return;
   }
 
-  prices[$("adminNetwork").value] = v;
-  airtimeDiscount = d;
+  prices[network] = values;
+  airtimeDiscount = discount;
 
   try {
     localStorage.setItem("aliyas_vtu_prices", JSON.stringify(prices));
-    localStorage.setItem("aliyas_vtu_discount", String(d));
-  } catch (e) {
-    console.error("Settings storage:", e);
+    localStorage.setItem("aliyas_vtu_discount", String(discount));
+  } catch (error) {
+    console.error("Settings storage:", error);
   }
 
   updateDataPrice();
   calcAirtime();
-  alert("Demo settings saved.");
-}
+  alert("Demo settings saved on this device.");
+};
 
 try {
   const saved = JSON.parse(
@@ -505,182 +599,114 @@ try {
   );
 
   if (saved) {
-    for (const n in defaultPrices) {
-      for (const s in defaultPrices[n]) {
-        const value = Number(saved?.[n]?.[s]);
-
+    for (const network in defaultPrices) {
+      for (const plan in defaultPrices[network]) {
+        const value = Number(saved?.[network]?.[plan]);
         if (Number.isSafeInteger(value) && value > 0) {
-          prices[n][s] = value;
+          prices[network][plan] = value;
         }
       }
     }
   }
 
-  const d = Number(localStorage.getItem("aliyas_vtu_discount"));
-
-  if (Number.isFinite(d) && d >= 0 && d <= 100) {
-    airtimeDiscount = d;
+  const discount = Number(localStorage.getItem("aliyas_vtu_discount"));
+  if (Number.isFinite(discount) && discount >= 0 && discount <= 100) {
+    airtimeDiscount = discount;
   }
-} catch (e) {
-  console.error("Settings loading:", e);
+} catch (error) {
+  console.error("Settings loading:", error);
 }
 
 loadSettings();
-</script>
+updateDataPlans();
 
+/* =========================================
+   AUTHENTICATION AND PROFILE
+========================================= */
 
-<script type="module">
-import { createClient } from
-  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-
-const SUPABASE_URL =
-  "https://bfmsbdgjdaiqmypcuxce.supabase.co";
-
-const SUPABASE_KEY = "sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
-
-if (!SUPABASE_KEY || SUPABASE_KEY.startsWith("PASTE_")) {
-  document.getElementById("authMessage").textContent =
-    "Set your Supabase Publishable key before using the website.";
-  throw new Error("Supabase Publishable key is missing.");
-}
-
-window.supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-window.currentUser = null;
-
-let displayedUserId = null;
-let currentUserIsAdmin = false;
-
-const $ = id => document.getElementById(id);
-
-const bankAccounts = {
-  OPay: "6458790287",
-  Moniepoint: "8136438501"
-};
-
-function msg(id, text, color = "#087c45") {
-  const el = $(id);
-  if (!el) return;
-  el.textContent = text;
-  el.style.color = color;
-}
-
-function naira(v) {
-  const n = Number(v);
-  return "₦" + (Number.isFinite(n) ? n : 0)
-    .toLocaleString("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-}
-
-function date(v) {
-  const d = new Date(v);
-  return isNaN(d) ? "Not available" : d.toLocaleString("en-NG");
-}
-
-function node(tag, text, cls) {
-  const e = document.createElement(tag);
-  e.textContent = text ?? "";
-  if (cls) e.className = cls;
-  return e;
-}
-
-function statusClass(s) {
-  return s === "approved" ? "approved" :
-    s === "rejected" ? "rejected" : "pending";
-}
-
-// SHOW LOGIN
-window.showLogin = () => {
-  $("registerForm").style.display = "none";
-  $("loginForm").style.display = "block";
+window.showLogin = function () {
+  if ($("registerForm")) $("registerForm").style.display = "none";
+  if ($("loginForm")) $("loginForm").style.display = "block";
   msg("authMessage", "");
 };
 
-// SHOW REGISTER
-window.showRegister = () => {
-  $("registerForm").style.display = "block";
-  $("loginForm").style.display = "none";
+window.showRegister = function () {
+  if ($("registerForm")) $("registerForm").style.display = "block";
+  if ($("loginForm")) $("loginForm").style.display = "none";
   msg("authMessage", "");
 };
 
-// BANK SELECTION
-$("fundBank").addEventListener("change", () => {
-  const b = $("fundBank").value;
-
-  if (!bankAccounts[b]) {
-    $("bankDetails").style.display = "none";
-    return;
-  }
-
-  $("bankName").textContent = b;
-  $("bankAccount").textContent = bankAccounts[b];
-  $("bankDetails").style.display = "block";
-});
-
-// CREATE PROFILE
-async function createProfile(u) {
-  const m = u.user_metadata || {};
+async function createProfile(user) {
+  const metadata = user.user_metadata || {};
 
   const { error } = await window.supabase
     .from("profiles")
     .upsert({
-      id: u.id,
-      full_name: m.full_name || u.email,
-      phone: m.phone || null
+      id: user.id,
+      full_name: metadata.full_name || user.email,
+      phone: metadata.phone || null
     }, { onConflict: "id" });
 
   if (error) console.error("Profile upsert:", error.message);
 }
 
-// CHECK ADMIN                        
- async function checkAdmin(u) {
-$("adminPanel").style.display = "none";
-currentUserIsAdmin = false;
+/* =========================================
+   WALLET
+   Assumes wallets table has user_id and balance
+========================================= */
 
-if (!u) return false;
+async function loadWallet(user) {
+  const balanceEl = $("walletBalance");
+  const messageEl = $("walletMessage");
 
-const { data, error } = await window.supabase
-.from("admin_users")
-.select("user_id")
-.eq("user_id", u.id)
-.maybeSingle();
+  if (!user) return;
 
-if (error) {
-console.error("Admin check:", error.message);
-return false;
+  if (balanceEl) balanceEl.textContent = "Loading...";
+  if (messageEl) messageEl.textContent = "";
+
+  const { data, error } = await window.supabase
+    .from("wallets")
+    .select("balance")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Wallet load:", error.message);
+    if (messageEl) messageEl.textContent = "Unable to load wallet: " + error.message;
+    return;
+  }
+
+  if (!data) {
+    if (balanceEl) balanceEl.textContent = "₦0.00";
+    if (messageEl) messageEl.textContent = "Wallet record not found yet.";
+    return;
+  }
+
+  if (balanceEl) balanceEl.textContent = naira(data.balance);
+  if (messageEl) messageEl.textContent = "Wallet balance";
 }
 
-if (!data) return false;
+/* =========================================
+   WALLET TRANSACTIONS
+========================================= */
 
-currentUserIsAdmin = true;
-$("adminPanel").style.display = "block";
-$("adminEmail").textContent = u.email || "Admin";
-
-await Promise.all([
-loadAdminFundingRequests(),
-loadTestFundingRequests()
-]);
-
-return true;
-}
-// LOAD TRANSACTIONS
-async function loadTransactions(u) {
+async function loadTransactions(user) {
   const box = $("walletTransactions");
+  if (!box) return;
+
   box.textContent = "Loading...";
 
   const { data, error } = await window.supabase
     .from("wallet_transactions")
     .select("type,amount,status,reference,description,created_at")
-    .eq("user_id", u.id)
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(10);
 
   box.textContent = "";
 
   if (error) {
-    box.append(node("p",
-      "Unable to load transactions: " + error.message, "empty"));
+    box.append(node("p", "Unable to load transactions: " + error.message, "empty"));
     return;
   }
 
@@ -690,7 +716,7 @@ async function loadTransactions(u) {
   }
 
   data.forEach(t => {
-    const x = node("div", "", "item");
+    const item = node("div", "", "item");
 
     [
       ["Type", t.type],
@@ -699,31 +725,35 @@ async function loadTransactions(u) {
       ["Reference", t.reference],
       ["Description", t.description],
       ["Date", date(t.created_at)]
-    ].forEach(([k, v]) => {
-      x.append(node("p", k + ": " + (v || "Not available")));
+    ].forEach(([key, value]) => {
+      item.append(node("p", key + ": " + (value || "Not available")));
     });
 
-    box.append(x);
+    box.append(item);
   });
 }
 
-// LOAD FUNDING HISTORY
-async function loadFundingHistory(u) {
+/* =========================================
+   CUSTOMER FUNDING HISTORY
+========================================= */
+
+async function loadFundingHistory(user) {
   const box = $("fundingHistory");
+  if (!box) return;
+
   box.textContent = "Loading...";
 
   const { data, error } = await window.supabase
     .from("wallet_funding_requests")
     .select("amount,bank,reference,status,created_at,admin_note")
-    .eq("user_id", u.id)
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(20);
 
   box.textContent = "";
 
   if (error) {
-    box.append(node("p",
-      "Unable to load funding history: " + error.message, "empty"));
+    box.append(node("p", "Unable to load funding history: " + error.message, "empty"));
     return;
   }
 
@@ -733,7 +763,7 @@ async function loadFundingHistory(u) {
   }
 
   data.forEach(r => {
-    const x = node("div", "", "item");
+    const item = node("div", "", "item");
 
     [
       ["Amount", naira(r.amount)],
@@ -742,124 +772,162 @@ async function loadFundingHistory(u) {
       ["Status", r.status],
       ["Date", date(r.created_at)],
       ["Admin note", r.admin_note]
-    ].forEach(([k, v]) => {
-      if (v) {
-        x.append(node(
-          "p",
-          k + ": " + v,
-          k === "Status" ? statusClass(r.status) : ""
-        ));
+    ].forEach(([key, value]) => {
+      if (value) {
+        item.append(node("p", key + ": " + value,
+          key === "Status" ? statusClass(r.status) : ""));
       }
     });
 
-    box.append(x);
+    box.append(item);
   });
 }
 
-// ADMIN FUNDING REQUEST DISPLAY
-function renderAdminRequest(box, r, isTest) {
-  const x = node("div", "", "item");
+/* =========================================
+   ADMIN CHECK
+========================================= */
 
-  x.append(node("h4",
-    isTest ? "TEST Funding Request" : "Funding Request"));
+async function checkAdmin(user) {
+  if ($("adminPanel")) $("adminPanel").style.display = "none";
+  if (adminDataPlansSection) adminDataPlansSection.style.display = "none";
+
+  currentUserIsAdmin = false;
+
+  if (!user) return false;
+
+  const { data, error } = await window.supabase
+    .from("admin_users")
+    .select("user_id")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Admin check:", error.message);
+    return false;
+  }
+
+  if (!data) return false;
+
+  currentUserIsAdmin = true;
+
+  if ($("adminPanel")) $("adminPanel").style.display = "block";
+  if ($("adminEmail")) $("adminEmail").textContent = user.email || "Admin";
+  if (adminDataPlansSection) adminDataPlansSection.style.display = "block";
+
+  await Promise.all([
+    window.loadAdminFundingRequests(),
+    window.loadTestFundingRequests(),
+    loadAdminDataPlans()
+  ]);
+
+  return true;
+}
+
+/* =========================================
+   ADMIN FUNDING REQUEST DISPLAY
+========================================= */
+
+function renderAdminRequest(box, request, isTest) {
+  const item = node("div", "", "item");
+
+  item.append(node("h4", isTest ? "TEST Funding Request" : "Funding Request"));
 
   [
-    ["Request ID", r.id],
-    ["Customer User ID", r.user_id],
-    ["Amount", naira(r.amount)],
-    ["Bank", r.bank],
-    ["Transaction Reference", r.reference],
-    ["Submitted", date(r.created_at)]
-  ].forEach(([k, v]) => {
-    if (v !== null && v !== undefined && v !== "") {
-      x.append(node("p", k + ": " + v));
+    ["Request ID", request.id],
+    ["Customer User ID", request.user_id],
+    ["Amount", naira(request.amount)],
+    ["Bank", request.bank],
+    ["Transaction Reference", request.reference],
+    ["Submitted", date(request.created_at)]
+  ].forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== "") {
+      item.append(node("p", key + ": " + value));
     }
   });
 
-  x.append(node("p",
-    "Status: " + r.status, statusClass(r.status)));
+  item.append(node("p", "Status: " + request.status, statusClass(request.status)));
 
-  if (r.admin_note) {
-    x.append(node("p", "Admin Note: " + r.admin_note));
+  if (request.admin_note) {
+    item.append(node("p", "Admin Note: " + request.admin_note));
   }
 
-  if (r.status === "pending") {
+  if (request.status === "pending") {
     const actions = node("div", "", "actions");
-    const a = node("button", "Approve");
-    const b = node("button", "Reject", "danger");
+    const approve = node("button", "Approve");
+    const reject = node("button", "Reject", "danger");
 
-    a.type = "button";
-    b.type = "button";
+    approve.type = "button";
+    reject.type = "button";
 
-    a.onclick = () => reviewRequest(r.id, "approve", isTest);
-    b.onclick = () => reviewRequest(r.id, "reject", isTest);
+    approve.onclick = () => reviewRequest(request.id, "approve", isTest);
+    reject.onclick = () => reviewRequest(request.id, "reject", isTest);
 
-    actions.append(a, b);
-    x.append(actions);
+    actions.append(approve, reject);
+    item.append(actions);
   }
 
-  box.append(x);
+  box.append(item);
 }
 
-// LOAD FUNDING REQUEST LIST
-async function loadRequestList({
-  table, columns, boxId, messageId, buttonId, isTest
-}) {
-  const box = $(boxId);
-  const btn = $(buttonId);
+async function loadRequestList(config) {
+  const box = $(config.boxId);
+  const btn = $(config.buttonId);
+
+  if (!box) return;
 
   if (!window.currentUser || !currentUserIsAdmin) {
     box.textContent = "Admin access required.";
     return;
   }
 
-  btn.disabled = true;
-  btn.textContent = "Loading...";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Loading...";
+  }
+
   box.textContent = "Loading requests...";
 
   try {
     const { data, error } = await window.supabase
-      .from(table)
-      .select(columns)
+      .from(config.table)
+      .select(config.columns)
       .order("created_at", { ascending: false })
       .limit(100);
 
     box.textContent = "";
 
     if (error) {
-      console.error(table + " load:", error);
-      box.append(node("p",
-        "Unable to load " + (isTest ? "test" : "real") +
-        " requests: " + error.message, "empty"));
-      msg(messageId, "Database error: " + error.message, "red");
+      box.append(node("p", "Unable to load requests: " + error.message, "empty"));
+      msg(config.messageId, error.message, "red");
       return;
     }
 
     if (!data?.length) {
       box.append(node("p", "No requests found.", "empty"));
-      msg(messageId, "Loaded successfully. No requests found.");
+      msg(config.messageId, "Loaded successfully. No requests found.");
       return;
     }
 
-    data.forEach(r => renderAdminRequest(box, r, isTest));
+    data.forEach(r => renderAdminRequest(box, r, config.isTest));
 
-    msg(messageId,
-      "Loaded " + data.length + " request(s); pending: " +
-      data.filter(r => r.status === "pending").length + ".");
+    msg(config.messageId,
+      "Loaded " + data.length + " request(s). Pending: " +
+      data.filter(r => r.status === "pending").length);
 
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error(error);
     box.textContent = "Unexpected error loading requests.";
-    msg(messageId, e.message, "red");
+    msg(config.messageId, error.message, "red");
 
   } finally {
-    btn.disabled = false;
-    btn.textContent = isTest ?
-      "Refresh Test Requests" : "Refresh Real Requests";
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = config.isTest ?
+        "Refresh Test Requests" : "Refresh Real Requests";
+    }
   }
 }
 
-// REAL FUNDING REQUESTS
 window.loadAdminFundingRequests = () => loadRequestList({
   table: "wallet_funding_requests",
   columns: "id,user_id,amount,bank,reference,status,created_at,admin_note",
@@ -869,7 +937,6 @@ window.loadAdminFundingRequests = () => loadRequestList({
   isTest: false
 });
 
-// TEST FUNDING REQUESTS
 window.loadTestFundingRequests = () => loadRequestList({
   table: "wallet_funding_test_requests",
   columns: "id,user_id,amount,reference,status,created_at,admin_note",
@@ -879,20 +946,22 @@ window.loadTestFundingRequests = () => loadRequestList({
   isTest: true
 });
 
-// REVIEW FUNDING REQUEST
+/* =========================================
+   ADMIN APPROVE / REJECT FUNDING
+========================================= */
+
 async function reviewRequest(id, decision, isTest) {
   if (!window.currentUser || !currentUserIsAdmin) {
-    msg(isTest ? "testAdminMessage" : "adminMessage",
-      "Admin access required.", "red");
+    msg(isTest ? "testAdminMessage" : "adminMessage", "Admin access required.", "red");
     return;
   }
 
-  if (!confirm(
-    isTest
-      ? "TEST ONLY: " + decision.toUpperCase() + " this test request?"
-      : "Confirm " + decision.toUpperCase() +
-        "? Verify the money has arrived before approving a real request."
-  )) return;
+  const confirmation = isTest
+    ? "TEST ONLY: " + decision.toUpperCase() + " this test request?"
+    : "Confirm " + decision.toUpperCase() +
+      "? Verify that the money has arrived before approving.";
+
+  if (!confirm(confirmation)) return;
 
   let note = prompt("Admin note (optional):");
   if (note === null) return;
@@ -917,28 +986,18 @@ async function reviewRequest(id, decision, isTest) {
       p_admin_note: note || null
     });
 
-    if (error) {
-      console.error(functionName, error);
-      msg(messageId, "Review failed: " + error.message, "red");
-      return;
-    }
+    if (error) throw error;
 
     if (!data || data.success !== true) {
-      msg(messageId,
-        "Database did not confirm the action: " +
-        (data?.message || JSON.stringify(data)), "red");
-      return;
+      throw new Error(data?.message || "Database did not confirm the action.");
     }
 
-    msg(messageId,
-      (isTest ? "TEST request " : "Funding request ") +
-      decision + " action completed. Please refresh and verify its status.");
+    msg(messageId, "Request " + decision + " action completed.");
 
     if (isTest) {
-      await loadTestFundingRequests();
+      await window.loadTestFundingRequests();
     } else {
-      await loadAdminFundingRequests();
-
+      await window.loadAdminFundingRequests();
       if (window.currentUser) {
         await loadFundingHistory(window.currentUser);
         await loadWallet(window.currentUser);
@@ -946,29 +1005,30 @@ async function reviewRequest(id, decision, isTest) {
       }
     }
 
-  } catch (e) {
-    console.error(e);
-    msg(messageId, "Unexpected error: " + e.message, "red");
+  } catch (error) {
+    console.error(error);
+    msg(messageId, "Review failed: " + error.message, "red");
   }
 }
 
-// SUBMIT FUNDING REQUEST
-window.submitFundingRequest = async () => {
-  const u = window.currentUser;
+/* =========================================
+   SUBMIT WALLET FUNDING REQUEST
+========================================= */
 
-  if (!u) {
+window.submitFundingRequest = async function () {
+  const user = window.currentUser;
+
+  if (!user) {
     msg("fundMessage", "Please login first.", "red");
     return;
   }
 
-  const amount = Number($("fundAmount").value);
-  const bank = $("fundBank").value;
-  const reference = $("fundReference").value.trim();
+  const amount = Number($("fundAmount")?.value);
+  const bank = $("fundBank")?.value;
+  const reference = $("fundReference")?.value.trim();
 
-  if (!Number.isSafeInteger(amount) ||
-      amount < 100 || amount > 1000000) {
-    msg("fundMessage",
-      "Enter an amount between ₦100 and ₦1,000,000.", "red");
+  if (!Number.isSafeInteger(amount) || amount < 100 || amount > 1000000) {
+    msg("fundMessage", "Enter an amount between ₦100 and ₦1,000,000.", "red");
     return;
   }
 
@@ -978,120 +1038,145 @@ window.submitFundingRequest = async () => {
   }
 
   if (reference.length < 3 || reference.length > 100) {
-    msg("fundMessage",
-      "Reference must be 3–100 characters.", "red");
+    msg("fundMessage", "Reference must be 3–100 characters.", "red");
     return;
   }
 
   const btn = $("fundButton");
-  btn.disabled = true;
-  btn.textContent = "Submitting...";
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Submitting...";
+  }
 
   try {
     const { error } = await window.supabase
       .from("wallet_funding_requests")
       .insert({
-        user_id: u.id,
+        user_id: user.id,
         amount,
         bank,
         reference
       });
 
     if (error) {
-      msg("fundMessage",
-        error.code === "23505"
-          ? "This reference has already been submitted."
-          : error.message,
-        "red");
-      return;
+      if (error.code === "23505") {
+        throw new Error("This reference has already been submitted.");
+      }
+      throw error;
     }
 
     $("fundAmount").value = "";
     $("fundBank").value = "";
     $("fundReference").value = "";
-    $("bankDetails").style.display = "none";
 
-    msg("fundMessage",
-      "Request submitted. It is pending verification.");
+    if ($("bankDetails")) $("bankDetails").style.display = "none";
 
-    await loadFundingHistory(u);
+    msg("fundMessage", "Request submitted. It is pending verification.");
+
+    await loadFundingHistory(user);
 
     if (currentUserIsAdmin) {
-      await loadAdminFundingRequests();
+      await window.loadAdminFundingRequests();
     }
 
-  } catch (e) {
-    msg("fundMessage", e.message, "red");
-
+  } catch (error) {
+    msg("fundMessage", error.message, "red");
   } finally {
-    btn.disabled = false;
-    btn.textContent = "Submit Funding Request";
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Submit Funding Request";
+    }
   }
 };
 
-// DISPLAY USER
-async function displayUser(u) {
-  if (!u) {
+/* =========================================
+   BANK SELECTION
+========================================= */
+
+if ($("fundBank")) {
+  $("fundBank").addEventListener("change", () => {
+    const bank = $("fundBank").value;
+
+    if (!bankAccounts[bank]) {
+      if ($("bankDetails")) $("bankDetails").style.display = "none";
+      return;
+    }
+
+    if ($("bankName")) $("bankName").textContent = bank;
+    if ($("bankAccount")) $("bankAccount").textContent = bankAccounts[bank];
+    if ($("bankDetails")) $("bankDetails").style.display = "block";
+  });
+}
+
+/* =========================================
+   DISPLAY USER
+========================================= */
+
+async function displayUser(user) {
+  if (!user) {
     window.currentUser = null;
     displayedUserId = null;
     currentUserIsAdmin = false;
 
-    $("dashboard").style.display = "none";
-    $("authCard").style.display = "block";
-    $("adminPanel").style.display = "none";
+    if ($("dashboard")) $("dashboard").style.display = "none";
+    if ($("authCard")) $("authCard").style.display = "block";
+    if ($("adminPanel")) $("adminPanel").style.display = "none";
+    if (adminDataPlansSection) adminDataPlansSection.style.display = "none";
     return;
   }
 
-  window.currentUser = u;
+  window.currentUser = user;
 
-  $("authCard").style.display = "none";
-  $("dashboard").style.display = "block";
+  if ($("authCard")) $("authCard").style.display = "none";
+  if ($("dashboard")) $("dashboard").style.display = "block";
 
-  $("profileName").textContent =
-    u.user_metadata?.full_name || u.email || "Customer";
+  if ($("profileName")) {
+    $("profileName").textContent =
+      user.user_metadata?.full_name || user.email || "Customer";
+  }
 
-  $("profileEmail").textContent = u.email || "";
+  if ($("profileEmail")) $("profileEmail").textContent = user.email || "";
+  if ($("profilePhone")) {
+    $("profilePhone").textContent = user.user_metadata?.phone || "Not provided";
+  }
 
-  $("profilePhone").textContent =
-    u.user_metadata?.phone || "Not provided";
+  if (displayedUserId === user.id) return;
+  displayedUserId = user.id;
 
-  if (displayedUserId === u.id) return;
-
-  displayedUserId = u.id;
-
-  await createProfile(u);
+  await createProfile(user);
 
   const { data: profile, error } = await window.supabase
     .from("profiles")
     .select("full_name,phone")
-    .eq("id", u.id)
+    .eq("id", user.id)
     .maybeSingle();
 
-  if (error) {
-    console.error("Profile fetch:", error.message);
-  }
+  if (error) console.error("Profile fetch:", error.message);
 
   if (profile) {
-    $("profileName").textContent = profile.full_name || u.email;
-    $("profilePhone").textContent = profile.phone || "Not provided";
+    if ($("profileName")) $("profileName").textContent = profile.full_name || user.email;
+    if ($("profilePhone")) $("profilePhone").textContent = profile.phone || "Not provided";
   }
 
   await Promise.all([
-    loadWallet(u),
-    loadTransactions(u),
-    loadFundingHistory(u),
-    checkAdmin(u)
+    loadWallet(user),
+    loadTransactions(user),
+    loadFundingHistory(user),
+    checkAdmin(user)
   ]);
 }
 
-// REGISTER CUSTOMER
-window.registerCustomer = async () => {
-  const name = $("regName").value.trim();
-  const phone = $("regPhone").value.trim();
-  const email = $("regEmail").value.trim();
-  const password = $("regPassword").value;
+/* =========================================
+   REGISTER
+========================================= */
 
-  if (name.length < 2 || !/^\d{11}$/.test(phone) ||
+window.registerCustomer = async function () {
+  const name = $("regName")?.value.trim();
+  const phone = $("regPhone")?.value.trim();
+  const email = $("regEmail")?.value.trim();
+  const password = $("regPassword")?.value;
+
+  if (!name || name.length < 2 || !validPhone(phone) ||
       !email || password.length < 6) {
     msg("authMessage",
       "Enter your name, valid 11-digit phone, email and password (minimum 6 characters).",
@@ -1101,32 +1186,35 @@ window.registerCustomer = async () => {
 
   msg("authMessage", "Creating account...");
 
-  const { data, error } = await window.supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { full_name: name, phone }
+  try {
+    const { data, error } = await window.supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: name, phone } }
+    });
+
+    if (error) throw error;
+
+    if (data.session && data.user) {
+      await displayUser(data.user);
+      msg("authMessage", "Account created successfully.");
+    } else {
+      msg("authMessage",
+        "Registration successful. Log in to continue. Check email if confirmation is enabled.");
     }
-  });
 
-  if (error) {
+  } catch (error) {
     msg("authMessage", error.message, "red");
-    return;
-  }
-
-  if (data.session && data.user) {
-    await displayUser(data.user);
-    msg("authMessage", "Account created successfully.");
-  } else {
-    msg("authMessage",
-      "Registration successful. Log in to continue (check email if confirmation is enabled).");
   }
 };
 
-// LOGIN CUSTOMER
-window.loginCustomer = async () => {
-  const email = $("loginEmail").value.trim();
-  const password = $("loginPassword").value;
+/* =========================================
+   LOGIN
+========================================= */
+
+window.loginCustomer = async function () {
+  const email = $("loginEmail")?.value.trim();
+  const password = $("loginPassword")?.value;
 
   if (!email || !password) {
     msg("authMessage", "Enter email and password.", "red");
@@ -1135,20 +1223,25 @@ window.loginCustomer = async () => {
 
   msg("authMessage", "Logging in...");
 
-  const { data, error } = await window.supabase.auth
-    .signInWithPassword({ email, password });
+  try {
+    const { data, error } = await window.supabase.auth
+      .signInWithPassword({ email, password });
 
-  if (error) {
+    if (error) throw error;
+
+    await displayUser(data.user);
+    msg("authMessage", "Welcome back!");
+
+  } catch (error) {
     msg("authMessage", error.message, "red");
-    return;
   }
-
-  await displayUser(data.user);
-  msg("authMessage", "Welcome back!");
 };
 
-// LOGOUT CUSTOMER
-window.logoutCustomer = async () => {
+/* =========================================
+   LOGOUT
+========================================= */
+
+window.logoutCustomer = async function () {
   const { error } = await window.supabase.auth.signOut();
 
   if (error) {
@@ -1158,59 +1251,37 @@ window.logoutCustomer = async () => {
 
   await displayUser(null);
 
-  $("walletBalance").textContent = "₦0.00";
-  $("walletMessage").textContent =
-    "Please login to view your wallet.";
+  if ($("walletBalance")) $("walletBalance").textContent = "₦0.00";
+  if ($("walletMessage")) $("walletMessage").textContent = "Please login to view your wallet.";
 
   [
     "walletTransactions",
     "fundingHistory",
     "adminFundingList",
-    "testFundingList"
+    "testFundingList",
+    "customerOrdersBox",
+    "adminOrdersBox"
   ].forEach(id => {
     if ($(id)) $(id).textContent = "";
   });
 
-  $("fundMessage").textContent = "";
-  $("adminMessage").textContent = "";
-  $("testAdminMessage").textContent = "";
+  msg("fundMessage", "");
+  msg("adminMessage", "");
+  msg("testAdminMessage", "");
 
   window.showLogin();
   msg("authMessage", "You have logged out.");
 };
 
-// AUTH STATE LISTENER
-window.supabase.auth.onAuthStateChange((event, session) => {
-  if (event === "SIGNED_IN" && session?.user) {
-    setTimeout(() => displayUser(session.user), 0);
-  }
+/* =========================================
+   CUSTOMER ORDER HISTORY
+========================================= */
 
-  if (event === "SIGNED_OUT") {
-    displayUser(null);
-  }
-});
-
-// RESTORE EXISTING SESSION
-const {
-  data: { session },
-  error: sessionError
-} = await window.supabase.auth.getSession();
-
-if (sessionError) {
-  console.error("Session:", sessionError.message);
-}
-
-if (session?.user) {
-  await displayUser(session.user);
-}
-
-console.log("AL-ILYAS VTU Supabase ready:", !!window.supabase);
-
-
-// CUSTOMER ORDER HISTORY
 window.loadCustomerOrders = async function () {
   const box = $("customerOrdersBox");
   const message = $("customerOrdersMessage");
+
+  if (!box || !message) return;
 
   if (!window.currentUser) {
     message.textContent = "Please login to view your orders.";
@@ -1218,7 +1289,7 @@ window.loadCustomerOrders = async function () {
   }
 
   message.textContent = "Loading your orders...";
-  box.innerHTML = "";
+  box.textContent = "";
 
   const { data, error } = await window.supabase
     .from("vtu_orders")
@@ -1232,7 +1303,7 @@ window.loadCustomerOrders = async function () {
     return;
   }
 
-  if (!data || data.length === 0) {
+  if (!data?.length) {
     message.textContent = "You have not placed any orders yet.";
     return;
   }
@@ -1240,30 +1311,25 @@ window.loadCustomerOrders = async function () {
   message.textContent = data.length + " order(s) found.";
 
   data.forEach(order => {
-    const item = document.createElement("div");
-    item.className = "order-item";
+    const item = node("div", "", "order-item");
 
-    const details = node("p",
-      order.service_type.toUpperCase() + " | " +
-      order.network + " | " + order.phone_number);
+    item.append(
+      node("p", order.service_type.toUpperCase() + " | " +
+        order.network + " | " + order.phone_number),
+      node("p", "Plan: " + (order.plan || "N/A")),
+      node("p", "Amount: " + naira(order.amount)),
+      node("p", "Status: " + order.status.toUpperCase()),
+      node("small", date(order.created_at))
+    );
 
-    const plan = node("p", "Plan: " + (order.plan || "N/A"));
-
-    const amount = node("p",
-      "Amount: " + naira(order.amount));
-
-    const status = node("p",
-      "Status: " + order.status.toUpperCase());
-
-    const time = node("small", date(order.created_at));
-
-    item.append(details, plan, amount, status, time);
-    box.appendChild(item);
+    box.append(item);
   });
 };
 
+/* =========================================
+   ADMIN ORDER STATUS
+========================================= */
 
-// ADMIN: UPDATE VTU ORDER STATUS
 window.updateVtuOrderStatus = async function (orderId, newStatus) {
   if (!window.currentUser || !currentUserIsAdmin) {
     alert("Admin access required.");
@@ -1275,13 +1341,9 @@ window.updateVtuOrderStatus = async function (orderId, newStatus) {
     return;
   }
 
-  if (!confirm("Change order status to " +
-      newStatus.toUpperCase() + "?")) {
-    return;
-  }
+  if (!confirm("Change order status to " + newStatus.toUpperCase() + "?")) return;
 
-  const message = $("adminOrdersMessage");
-  message.textContent = "Updating order status...";
+  msg("adminOrdersMessage", "Updating order status...");
 
   try {
     const { data, error } = await window.supabase.rpc(
@@ -1292,32 +1354,29 @@ window.updateVtuOrderStatus = async function (orderId, newStatus) {
       }
     );
 
-    if (error) {
-      console.error("Order status error:", error);
-      message.textContent = "Update failed: " + error.message;
-      return;
-    }
-
+    if (error) throw error;
     if (!data || data.success !== true) {
-      message.textContent =
-        "The database did not confirm the update.";
-      return;
+      throw new Error("Database did not confirm the update.");
     }
 
-    message.textContent = "Order status updated successfully.";
+    msg("adminOrdersMessage", "Order status updated successfully.");
     await window.loadAdminOrders();
 
-  } catch (e) {
-    console.error(e);
-    message.textContent = "Unexpected error: " + e.message;
+  } catch (error) {
+    console.error(error);
+    msg("adminOrdersMessage", "Update failed: " + error.message, "red");
   }
 };
 
+/* =========================================
+   ADMIN: VIEW ALL CUSTOMER ORDERS
+========================================= */
 
-// ADMIN: VIEW ALL CUSTOMER ORDERS
 window.loadAdminOrders = async function () {
   const box = $("adminOrdersBox");
   const message = $("adminOrdersMessage");
+
+  if (!box || !message) return;
 
   if (!window.currentUser) {
     message.textContent = "Please login first.";
@@ -1330,7 +1389,7 @@ window.loadAdminOrders = async function () {
   }
 
   message.textContent = "Loading customer orders...";
-  box.innerHTML = "";
+  box.textContent = "";
 
   const { data, error } = await window.supabase
     .from("vtu_orders")
@@ -1343,7 +1402,7 @@ window.loadAdminOrders = async function () {
     return;
   }
 
-  if (!data || data.length === 0) {
+  if (!data?.length) {
     message.textContent = "No customer orders found.";
     return;
   }
@@ -1351,67 +1410,45 @@ window.loadAdminOrders = async function () {
   message.textContent = data.length + " customer order(s) found.";
 
   data.forEach(order => {
-    const item = document.createElement("div");
-    item.className = "order-item";
+    const item = node("div", "", "order-item");
 
-    const details = node("p",
-      order.service_type.toUpperCase() + " | " +
-      order.network + " | " + order.phone_number);
+    item.append(
+      node("p", order.service_type.toUpperCase() + " | " +
+        order.network + " | " + order.phone_number),
+      node("p", "Plan: " + (order.plan || "N/A")),
+      node("p", "Amount: " + naira(order.amount)),
+      node("p", "Status: " + order.status.toUpperCase()),
+      node("small", "Customer ID: " + order.user_id),
+      node("small", date(order.created_at))
+    );
 
-    const plan = node("p", "Plan: " + (order.plan || "N/A"));
-
-    const amount = node("p",
-      "Amount: " + naira(order.amount));
-
-    const status = node("p",
-      "Status: " + order.status.toUpperCase());
-
-    const user = node("small",
-      "Customer ID: " + order.user_id);
-
-    const time = node("small", date(order.created_at));
-
-    item.append(details, plan, amount, status, user, time);
-
-    // SHOW STATUS BUTTONS ONLY FOR UNFINISHED ORDERS
     if (["pending", "processing"].includes(order.status)) {
-      const actions = document.createElement("div");
-      actions.className = "actions";
+      const actions = node("div", "", "actions");
 
-      ["processing", "successful", "failed"].forEach(newStatus => {
-        const button = document.createElement("button");
+      ["processing", "successful", "failed"].forEach(status => {
+        const button = node("button", status.toUpperCase());
         button.type = "button";
-        button.textContent = newStatus.toUpperCase();
-
-        button.onclick = function () {
-          window.updateVtuOrderStatus(order.id, newStatus);
-        };
-
-        actions.appendChild(button);
+        button.onclick = () => window.updateVtuOrderStatus(order.id, status);
+        actions.append(button);
       });
 
-      item.appendChild(actions);
+      item.append(actions);
     }
 
-    box.appendChild(item);
+    box.append(item);
   });
 };
 
- 
-/* ================================
+/* =========================================
    ADMIN DATA PLAN MANAGER
-================================ */
+========================================= */
 
 const dataPlanForm = $("dataPlanForm");
 const dataPlanMessage = $("dataPlanMessage");
 const adminDataPlansList = $("adminDataPlansList");
-const adminDataPlansSection = $("adminDataPlansSection");
-
-if (adminDataPlansSection) {
-  adminDataPlansSection.style.display = "none";
-}
 
 function showPlanMessage(message, isError = false) {
+  if (!dataPlanMessage) return;
   dataPlanMessage.textContent = message;
   dataPlanMessage.style.color = isError ? "red" : "green";
 }
@@ -1427,16 +1464,19 @@ function escapePlanText(value) {
 }
 
 function resetPlanForm() {
+  if (!dataPlanForm) return;
+
   dataPlanForm.reset();
-  $("editPlanId").value = "";
-  $("planActive").checked = true;
-  $("cancelPlanEdit").style.display = "none";
-  dataPlanForm.querySelector('button[type="submit"]').textContent =
-    "Save Data Plan";
+  if ($("editPlanId")) $("editPlanId").value = "";
+  if ($("planActive")) $("planActive").checked = true;
+  if ($("cancelPlanEdit")) $("cancelPlanEdit").style.display = "none";
+
+  const submit = dataPlanForm.querySelector('button[type="submit"]');
+  if (submit) submit.textContent = "Save Data Plan";
 }
 
 async function loadAdminDataPlans() {
-  if (!currentUserIsAdmin) return;
+  if (!currentUserIsAdmin || !adminDataPlansList) return;
 
   adminDataPlansList.textContent = "Loading plans...";
 
@@ -1453,11 +1493,10 @@ async function loadAdminDataPlans() {
 
   const { data: pricing, error: pricingError } = await window.supabase
     .from("vtu_network_pricing")
-    .select("network, data_markup_percent");
+    .select("network,data_markup_percent");
 
   if (pricingError) {
-    adminDataPlansList.textContent =
-      "Could not load network pricing: " + pricingError.message;
+    adminDataPlansList.textContent = "Could not load network pricing: " + pricingError.message;
     return;
   }
 
@@ -1468,7 +1507,7 @@ async function loadAdminDataPlans() {
     ])
   );
 
-  if (!plans || plans.length === 0) {
+  if (!plans?.length) {
     adminDataPlansList.textContent = "No data plans added yet.";
     return;
   }
@@ -1486,9 +1525,9 @@ async function loadAdminDataPlans() {
         <h3>${escapePlanText(plan.network)} - ${escapePlanText(plan.plan_name)}</h3>
         <p>Code: ${escapePlanText(plan.plan_code)}</p>
         <p>Validity: ${escapePlanText(plan.validity || "Not specified")}</p>
-        <p>Provider Cost: ₦${cost.toFixed(2)}</p>
-        <p>Selling Price: ₦${selling.toFixed(2)}</p>
-        <p>Estimated Profit: ₦${profit.toFixed(2)}</p>
+        <p>Provider Cost: ${naira(cost)}</p>
+        <p>Selling Price: ${naira(selling)}</p>
+        <p>Estimated Profit: ${naira(profit)}</p>
         <p>Status: ${plan.is_active ? "Active" : "Inactive"}</p>
         <button type="button" data-plan-edit="${plan.id}">Edit</button>
         <button type="button" data-plan-delete="${plan.id}">Delete</button>
@@ -1497,137 +1536,170 @@ async function loadAdminDataPlans() {
   }).join("");
 }
 
-dataPlanForm.addEventListener("submit", async event => {
-  event.preventDefault();
+if (dataPlanForm) {
+  dataPlanForm.addEventListener("submit", async event => {
+    event.preventDefault();
 
-  if (!currentUserIsAdmin || !window.currentUser) {
-    showPlanMessage("Admin access required.", true);
-    return;
-  }
-
-  const editId = $("editPlanId").value;
-
-  const providerCost = Number($("providerCost").value);
-  const customInput = $("customPrice").value.trim();
-  const customPrice = customInput === "" ? null : Number(customInput);
-
-  if (!Number.isFinite(providerCost) || providerCost <= 0) {
-    showPlanMessage("Enter a valid provider cost.", true);
-    return;
-  }
-
-  if (customPrice !== null &&
-      (!Number.isFinite(customPrice) || customPrice <= 0)) {
-    showPlanMessage("Enter a valid selling price or leave it empty.", true);
-    return;
-  }
-
-  const plan = {
-    network: $("planNetwork").value,
-    plan_code: $("planCode").value.trim(),
-    plan_name: $("planName").value.trim(),
-    validity: $("planValidity").value.trim() || null,
-    provider_cost: providerCost,
-    custom_selling_price: customPrice,
-    is_active: $("planActive").checked,
-    updated_at: new Date().toISOString()
-  };
-
-  if (!plan.plan_code || !plan.plan_name) {
-    showPlanMessage("Plan code and plan name are required.", true);
-    return;
-  }
-
-  const submitButton = dataPlanForm.querySelector('button[type="submit"]');
-  submitButton.disabled = true;
-
-  try {
-    let result;
-
-    if (editId) {
-      result = await window.supabase
-        .from("vtu_data_plans")
-        .update(plan)
-        .eq("id", editId);
-    } else {
-      result = await window.supabase
-        .from("vtu_data_plans")
-        .insert(plan);
-    }
-
-    if (result.error) throw result.error;
-
-    showPlanMessage(editId ? "Plan updated successfully." :
-      "New plan added successfully.");
-
-    resetPlanForm();
-    await loadAdminDataPlans();
-
-  } catch (error) {
-    showPlanMessage(error.message || "Could not save plan.", true);
-  } finally {
-    submitButton.disabled = false;
-  }
-});
-
-adminDataPlansList.addEventListener("click", async event => {
-  if (!currentUserIsAdmin) return;
-
-  const editButton = event.target.closest("[data-plan-edit]");
-  const deleteButton = event.target.closest("[data-plan-delete]");
-
-  if (editButton) {
-    const id = editButton.dataset.planEdit;
-
-    const { data: plan, error } = await window.supabase
-      .from("vtu_data_plans")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) {
-      showPlanMessage(error.message, true);
+    if (!currentUserIsAdmin || !window.currentUser) {
+      showPlanMessage("Admin access required.", true);
       return;
     }
 
-    $("editPlanId").value = plan.id;
-    $("planNetwork").value = plan.network;
-    $("planCode").value = plan.plan_code;
-    $("planName").value = plan.plan_name;
-    $("planValidity").value = plan.validity || "";
-    $("providerCost").value = plan.provider_cost;
-    $("customPrice").value = plan.custom_selling_price ?? "";
-    $("planActive").checked = plan.is_active;
+    const editId = $("editPlanId")?.value;
+    const providerCost = Number($("providerCost")?.value);
+    const customInput = $("customPrice")?.value.trim();
+    const customPrice = customInput === "" ? null : Number(customInput);
 
-    $("cancelPlanEdit").style.display = "block";
-    dataPlanForm.querySelector('button[type="submit"]').textContent =
-      "Update Data Plan";
-
-    dataPlanForm.scrollIntoView({ behavior: "smooth" });
-  }
-
-  if (deleteButton) {
-    const id = deleteButton.dataset.planDelete;
-
-    if (!confirm("Are you sure you want to delete this plan?")) return;
-
-    const { error } = await window.supabase
-      .from("vtu_data_plans")
-      .delete()
-      .eq("id", id);
-
-    if (error) {
-      showPlanMessage(error.message, true);
+    if (!Number.isFinite(providerCost) || providerCost <= 0) {
+      showPlanMessage("Enter a valid provider cost.", true);
       return;
     }
 
-    showPlanMessage("Plan deleted successfully.");
-    await loadAdminDataPlans();
+    if (customPrice !== null &&
+        (!Number.isFinite(customPrice) || customPrice <= 0)) {
+      showPlanMessage("Enter a valid selling price or leave it empty.", true);
+      return;
+    }
+
+    const plan = {
+      network: $("planNetwork").value,
+      plan_code: $("planCode").value.trim(),
+      plan_name: $("planName").value.trim(),
+      validity: $("planValidity").value.trim() || null,
+      provider_cost: providerCost,
+      custom_selling_price: customPrice,
+      is_active: $("planActive").checked,
+      updated_at: new Date().toISOString()
+    };
+
+    if (!plan.plan_code || !plan.plan_name) {
+      showPlanMessage("Plan code and plan name are required.", true);
+      return;
+    }
+
+    const submit = dataPlanForm.querySelector('button[type="submit"]');
+    if (submit) submit.disabled = true;
+
+    try {
+      let result;
+
+      if (editId) {
+        result = await window.supabase
+          .from("vtu_data_plans")
+          .update(plan)
+          .eq("id", editId);
+      } else {
+        result = await window.supabase
+          .from("vtu_data_plans")
+          .insert(plan);
+      }
+
+      if (result.error) throw result.error;
+
+      showPlanMessage(editId ? "Plan updated successfully." : "New plan added successfully.");
+      resetPlanForm();
+      await loadAdminDataPlans();
+
+    } catch (error) {
+      showPlanMessage(error.message || "Could not save plan.", true);
+    } finally {
+      if (submit) submit.disabled = false;
+    }
+  });
+}
+
+if (adminDataPlansList) {
+  adminDataPlansList.addEventListener("click", async event => {
+    if (!currentUserIsAdmin) return;
+
+    const editButton = event.target.closest("[data-plan-edit]");
+    const deleteButton = event.target.closest("[data-plan-delete]");
+
+    if (editButton) {
+      const id = editButton.dataset.planEdit;
+
+      const { data: plan, error } = await window.supabase
+        .from("vtu_data_plans")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (error) {
+        showPlanMessage(error.message, true);
+        return;
+      }
+
+      $("editPlanId").value = plan.id;
+      $("planNetwork").value = plan.network;
+      $("planCode").value = plan.plan_code;
+      $("planName").value = plan.plan_name;
+      $("planValidity").value = plan.validity || "";
+      $("providerCost").value = plan.provider_cost;
+      $("customPrice").value = plan.custom_selling_price ?? "";
+      $("planActive").checked = plan.is_active;
+
+      $("cancelPlanEdit").style.display = "block";
+      dataPlanForm.querySelector('button[type="submit"]').textContent = "Update Data Plan";
+      dataPlanForm.scrollIntoView({ behavior: "smooth" });
+    }
+
+    if (deleteButton) {
+      const id = deleteButton.dataset.planDelete;
+
+      if (!confirm("Are you sure you want to delete this plan?")) return;
+
+      const { error } = await window.supabase
+        .from("vtu_data_plans")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        showPlanMessage(error.message, true);
+        return;
+      }
+
+      showPlanMessage("Plan deleted successfully.");
+      await loadAdminDataPlans();
+    }
+  });
+}
+
+if ($("cancelPlanEdit")) {
+  $("cancelPlanEdit").addEventListener("click", resetPlanForm);
+}
+
+if ($("refreshDataPlans")) {
+  $("refreshDataPlans").addEventListener("click", loadAdminDataPlans);
+}
+
+/* =========================================
+   AUTH STATE AND SESSION RESTORE
+========================================= */
+
+window.supabase.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_IN" && session?.user) {
+    setTimeout(() => displayUser(session.user), 0);
+  }
+
+  if (event === "SIGNED_OUT") {
+    displayUser(null);
   }
 });
 
-$("cancelPlanEdit").addEventListener("click", resetPlanForm);
-$("refreshDataPlans").addEventListener("click", loadAdminDataPlans);
+const {
+  data: { session },
+  error: sessionError
+} = await window.supabase.auth.getSession();
+
+if (sessionError) {
+  console.error("Session error:", sessionError.message);
+}
+
+if (session?.user) {
+  await displayUser(session.user);
+}
+
+console.log("AL-ILYAS VTU Supabase ready.");
 
 </script>
 </body>

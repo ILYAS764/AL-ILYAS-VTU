@@ -368,67 +368,127 @@ window.updateDataPrice = updateDataPrice;
    BUY DATA — SAVES PENDING ORDER
 ========================================= */
 
+// Keep the same request ID when the same order is retried.
+// This helps prevent duplicate wallet deductions.
+let pendingDataRequest = null;
+let pendingAirtimeRequest = null;
+
+function getOrderRequestId(type, details) {
+  const signature = JSON.stringify(details);
+  const key = type === "data"
+    ? "pendingDataRequest"
+    : "pendingAirtimeRequest";
+
+  let pending = type === "data"
+    ? pendingDataRequest
+    : pendingAirtimeRequest;
+
+  if (!pending || pending.signature !== signature) {
+    pending = {
+      signature,
+      id: crypto.randomUUID()
+    };
+
+    if (type === "data") {
+      pendingDataRequest = pending;
+    } else {
+      pendingAirtimeRequest = pending;
+    }
+  }
+
+  return pending.id;
+}
+
+
+/* =========================================
+   DATA ORDER — SECURE SUPABASE RPC
+========================================= */
+
 window.buyData = async function () {
   const u = window.currentUser;
   const client = window.supabase;
 
-  if (!u) {
+  if (!u || !client) {
     alert("Please login before ordering.");
     $("authCard")?.scrollIntoView();
     return;
   }
 
-  const n = $("dataNetwork")?.value;
+  const network = $("dataNetwork")?.value;
   const phone = $("dataPhone")?.value.trim();
-  const plan = $("dataPlan")?.value;
-  const price = Number(prices[n]?.[plan]);
+  const planCode = $("dataPlan")?.value;
 
-  if (!n || !plan || !validPhone(phone) ||
-      !Number.isFinite(price) || price <= 0) {
+  const cleanPhone = phone.replace(/\D/g, "");
+
+  if (
+    !network ||
+    !planCode ||
+    !validPhone(phone) ||
+    !/^[0-9]{10,15}$/.test(cleanPhone)
+  ) {
     alert("Enter a valid phone number, network and plan.");
     return;
   }
 
-  const btn = document.querySelector('button[onclick="buyData()"]');
+  const requestId = getOrderRequestId("data", {
+    network,
+    phone: cleanPhone,
+    planCode
+  });
+
+  const btn = document.querySelector(
+    'button[onclick="buyData()"]'
+  );
+
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "Saving Order...";
+    btn.textContent = "Processing...";
   }
 
   try {
-    const { data, error } = await client
-      .from("vtu_orders")
-      .insert({
-        user_id: u.id,
-        service_type: "data",
-        network: n,
-        phone_number: phone,
-        plan: plan,
-        amount: price,
-        status: "pending"
-      })
-      .select("id")
-      .single();
+    const { data, error } = await client.rpc(
+      "create_secure_vtu_order",
+      {
+        p_request_id: requestId,
+        p_service_type: "data",
+        p_network: network,
+        p_phone_number: cleanPhone,
+        p_plan_code: planCode,
+        p_airtime_face_value: null
+      }
+    );
 
     if (error) throw error;
+    if (!data || !data.success) {
+      throw new Error("Order could not be processed.");
+    }
+
+    // Clear the request ID only after confirmed success.
+    pendingDataRequest = null;
 
     showSummary("dataSummary", "Data Order Summary", [
-      "Order ID: " + data.id,
-      "Network: " + n,
-      "Phone: " + phone,
-      "Plan: " + plan,
-      "Amount: " + naira(price),
-      "Status: Pending",
-      "No payment or data delivery has occurred."
+      "Order ID: " + data.order_id,
+      "Network: " + network,
+      "Phone: " + cleanPhone,
+      "Plan: " + planCode,
+      "Amount: " + naira(Number(data.amount)),
+      "New Wallet Balance: " + naira(Number(data.new_balance)),
+      "Status: " + data.status,
+      "Wallet deduction successful.",
+      "Data delivery is not yet confirmed."
     ]);
+
+    if (window.loadWallet) {
+      await window.loadWallet();
+    }
 
     if (window.loadCustomerOrders) {
       await window.loadCustomerOrders();
     }
 
   } catch (error) {
-    console.error("Data order:", error);
-    alert("Unable to save order: " + error.message);
+    console.error("Secure data order:", error);
+    alert("Unable to process data order: " + error.message);
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -437,27 +497,28 @@ window.buyData = async function () {
   }
 };
 
+
 /* =========================================
-   AIRTIME — DEMO DISCOUNT
+   AIRTIME PRICE DISPLAY
+   Final price is calculated by Supabase.
 ========================================= */
 
 function calcAirtime() {
   const amount = Number($("airAmount")?.value);
 
-  if (!Number.isSafeInteger(amount) || amount < 50 || amount > 100000) {
-    if ($("discountValue")) $("discountValue").textContent = "₦0";
-    if ($("payable")) $("payable").textContent = "₦0";
-    return;
-  }
-
-  const discount = amount * airtimeDiscount / 100;
-  const payable = amount - discount;
+  const validAmount =
+    Number.isSafeInteger(amount) &&
+    amount >= 50 &&
+    amount <= 100000;
 
   if ($("discountValue")) {
-    $("discountValue").textContent = naira(discount);
+    $("discountValue").textContent =
+      validAmount ? "Admin pricing" : "₦0";
   }
+
   if ($("payable")) {
-    $("payable").textContent = naira(payable);
+    $("payable").textContent =
+      validAmount ? "Confirmed at checkout" : "₦0";
   }
 }
 
@@ -467,10 +528,16 @@ if ($("airAmount")) {
 
 window.calcAirtime = calcAirtime;
 
+
+/* =========================================
+   AIRTIME ORDER — SECURE SUPABASE RPC
+========================================= */
+
 window.buyAirtime = async function () {
   const u = window.currentUser;
+  const client = window.supabase;
 
-  if (!u) {
+  if (!u || !client) {
     alert("Please login before ordering.");
     $("authCard")?.scrollIntoView();
     return;
@@ -480,57 +547,78 @@ window.buyAirtime = async function () {
   const phone = $("airPhone")?.value.trim();
   const amount = Number($("airAmount")?.value);
 
-  if (!network || !validPhone(phone) ||
-      !Number.isSafeInteger(amount) || amount < 50 || amount > 100000) {
+  const cleanPhone = phone.replace(/\D/g, "");
+
+  if (
+    !network ||
+    !validPhone(phone) ||
+    !/^[0-9]{10,15}$/.test(cleanPhone) ||
+    !Number.isSafeInteger(amount) ||
+    amount < 50 ||
+    amount > 100000
+  ) {
     alert("Enter valid airtime details.");
     return;
   }
 
-  const discount = amount * airtimeDiscount / 100;
-  const payable = amount - discount;
+  const requestId = getOrderRequestId("airtime", {
+    network,
+    phone: cleanPhone,
+    amount
+  });
 
-  const btn = document.querySelector('button[onclick="buyAirtime()"]');
+  const btn = document.querySelector(
+    'button[onclick="buyAirtime()"]'
+  );
+
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "Saving Order...";
+    btn.textContent = "Processing...";
   }
 
   try {
-    const { data, error } = await window.supabase
-      .from("vtu_orders")
-      .insert({
-        user_id: u.id,
-        service_type: "airtime",
-        network,
-        phone_number: phone,
-        plan: "Airtime ₦" + amount,
-        amount: payable,
-        status: "pending"
-      })
-      .select("id")
-      .single();
+    const { data, error } = await client.rpc(
+      "create_secure_vtu_order",
+      {
+        p_request_id: requestId,
+        p_service_type: "airtime",
+        p_network: network,
+        p_phone_number: cleanPhone,
+        p_plan_code: null,
+        p_airtime_face_value: amount
+      }
+    );
 
     if (error) throw error;
+    if (!data || !data.success) {
+      throw new Error("Airtime order could not be processed.");
+    }
+
+    pendingAirtimeRequest = null;
 
     showSummary("airSummary", "Airtime Order Summary", [
-      "Order ID: " + data.id,
+      "Order ID: " + data.order_id,
       "Network: " + network,
-      "Phone: " + phone,
+      "Phone: " + cleanPhone,
       "Airtime Value: " + naira(amount),
-      "Discount: " + airtimeDiscount + "%",
-      "Discount Value: " + naira(discount),
-      "Customer Pays: " + naira(payable),
-      "Status: Pending",
-      "No payment or airtime delivery has occurred."
+      "Customer Pays: " + naira(Number(data.amount)),
+      "New Wallet Balance: " + naira(Number(data.new_balance)),
+      "Status: " + data.status,
+      "Wallet deduction successful.",
+      "Airtime delivery is not yet confirmed."
     ]);
+
+    if (window.loadWallet) {
+      await window.loadWallet();
+    }
 
     if (window.loadCustomerOrders) {
       await window.loadCustomerOrders();
     }
 
   } catch (error) {
-    console.error("Airtime order:", error);
-    alert("Unable to save airtime order: " + error.message);
+    console.error("Secure airtime order:", error);
+    alert("Unable to process airtime order: " + error.message);
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -538,10 +626,6 @@ window.buyAirtime = async function () {
     }
   }
 };
-
-/* =========================================
-   DEMO ADMIN SETTINGS
-========================================= */
 
 function loadSettings() {
   const network = $("adminNetwork")?.value;

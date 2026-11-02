@@ -891,9 +891,16 @@ async function loadFundingHistory(user) {
 ========================================= */
 
 async function checkAdmin(user) {
+  // Hide all admin sections first
   if ($("adminPanel")) $("adminPanel").style.display = "none";
-  if (adminDataPlansSection) adminDataPlansSection.style.display = "none";
-  $("adminTestWalletSection")?.style.setProperty("display", "block");
+
+  if (adminDataPlansSection) {
+    adminDataPlansSection.style.display = "none";
+  }
+
+  if ($("adminTestWalletSection")) {
+    $("adminTestWalletSection").style.display = "none";
+  }
 
   currentUserIsAdmin = false;
 
@@ -912,11 +919,25 @@ async function checkAdmin(user) {
 
   if (!data) return false;
 
+  // Admin verified
   currentUserIsAdmin = true;
 
-  if ($("adminPanel")) $("adminPanel").style.display = "block";
-  if ($("adminEmail")) $("adminEmail").textContent = user.email || "Admin";
-  if (adminDataPlansSection) adminDataPlansSection.style.display = "block";
+  if ($("adminPanel")) {
+    $("adminPanel").style.display = "block";
+  }
+
+  if ($("adminEmail")) {
+    $("adminEmail").textContent = user.email || "Admin";
+  }
+
+  if (adminDataPlansSection) {
+    adminDataPlansSection.style.display = "block";
+  }
+
+  // Show test wallet section only to verified admin
+  if ($("adminTestWalletSection")) {
+    $("adminTestWalletSection").style.display = "block";
+  }
 
   await Promise.all([
     window.loadAdminFundingRequests(),
@@ -926,129 +947,6 @@ async function checkAdmin(user) {
 
   return true;
 }
-
-/* =========================================
-   ADMIN FUNDING REQUEST DISPLAY
-========================================= */
-
-function renderAdminRequest(box, request, isTest) {
-  const item = node("div", "", "item");
-
-  item.append(node("h4", isTest ? "TEST Funding Request" : "Funding Request"));
-
-  [
-    ["Request ID", request.id],
-    ["Customer User ID", request.user_id],
-    ["Amount", naira(request.amount)],
-    ["Bank", request.bank],
-    ["Transaction Reference", request.reference],
-    ["Submitted", date(request.created_at)]
-  ].forEach(([key, value]) => {
-    if (value !== null && value !== undefined && value !== "") {
-      item.append(node("p", key + ": " + value));
-    }
-  });
-
-  item.append(node("p", "Status: " + request.status, statusClass(request.status)));
-
-  if (request.admin_note) {
-    item.append(node("p", "Admin Note: " + request.admin_note));
-  }
-
-  if (request.status === "pending") {
-    const actions = node("div", "", "actions");
-    const approve = node("button", "Approve");
-    const reject = node("button", "Reject", "danger");
-
-    approve.type = "button";
-    reject.type = "button";
-
-    approve.onclick = () => reviewRequest(request.id, "approve", isTest);
-    reject.onclick = () => reviewRequest(request.id, "reject", isTest);
-
-    actions.append(approve, reject);
-    item.append(actions);
-  }
-
-  box.append(item);
-}
-
-async function loadRequestList(config) {
-  const box = $(config.boxId);
-  const btn = $(config.buttonId);
-
-  if (!box) return;
-
-  if (!window.currentUser || !currentUserIsAdmin) {
-    box.textContent = "Admin access required.";
-    return;
-  }
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "Loading...";
-  }
-
-  box.textContent = "Loading requests...";
-
-  try {
-    const { data, error } = await window.supabase
-      .from(config.table)
-      .select(config.columns)
-      .order("created_at", { ascending: false })
-      .limit(100);
-
-    box.textContent = "";
-
-    if (error) {
-      box.append(node("p", "Unable to load requests: " + error.message, "empty"));
-      msg(config.messageId, error.message, "red");
-      return;
-    }
-
-    if (!data?.length) {
-      box.append(node("p", "No requests found.", "empty"));
-      msg(config.messageId, "Loaded successfully. No requests found.");
-      return;
-    }
-
-    data.forEach(r => renderAdminRequest(box, r, config.isTest));
-
-    msg(config.messageId,
-      "Loaded " + data.length + " request(s). Pending: " +
-      data.filter(r => r.status === "pending").length);
-
-  } catch (error) {
-    console.error(error);
-    box.textContent = "Unexpected error loading requests.";
-    msg(config.messageId, error.message, "red");
-
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = config.isTest ?
-        "Refresh Test Requests" : "Refresh Real Requests";
-    }
-  }
-}
-
-window.loadAdminFundingRequests = () => loadRequestList({
-  table: "wallet_funding_requests",
-  columns: "id,user_id,amount,bank,reference,status,created_at,admin_note",
-  boxId: "adminFundingList",
-  messageId: "adminMessage",
-  buttonId: "refreshAdminButton",
-  isTest: false
-});
-
-window.loadTestFundingRequests = () => loadRequestList({
-  table: "wallet_funding_test_requests",
-  columns: "id,user_id,amount,reference,status,created_at,admin_note",
-  boxId: "testFundingList",
-  messageId: "testAdminMessage",
-  buttonId: "refreshTestButton",
-  isTest: true
-});
 
 /* =========================================
    ADMIN APPROVE / REJECT FUNDING

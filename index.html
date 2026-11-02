@@ -1430,11 +1430,59 @@ window.loadAdminOrders = async function () {
       ["processing", "successful", "failed"].forEach(status => {
         const button = node("button", status.toUpperCase());
         button.type = "button";
-        button.onclick = () => window.updateVtuOrderStatus(order.id, status);
+        button.onclick = () =>
+          window.updateVtuOrderStatus(order.id, status);
         actions.append(button);
       });
 
       item.append(actions);
+    }
+
+    // REFUND BUTTON: only for failed orders
+    if (order.status === "failed") {
+      const refundButton = node("button", "REFUND CUSTOMER");
+      refundButton.type = "button";
+
+      refundButton.onclick = async () => {
+        const confirmed = confirm(
+          "Are you sure you want to refund " +
+          naira(order.amount) + " to this customer?"
+        );
+
+        if (!confirmed) return;
+
+        refundButton.disabled = true;
+        refundButton.textContent = "REFUNDING...";
+
+        try {
+          const { data: refundData, error: refundError } =
+            await window.supabase.rpc("admin_refund_vtu_order", {
+              p_order_id: order.id,
+              p_admin_note: "Admin refund for failed VTU order"
+            });
+
+          if (refundError) throw refundError;
+
+          if (!refundData || !refundData.success) {
+            throw new Error("Refund was not completed.");
+          }
+
+          alert(
+            "Refund successful!\nAmount: " +
+            naira(refundData.refunded_amount)
+          );
+
+          await window.loadAdminOrders();
+
+        } catch (error) {
+          console.error("Refund error:", error);
+          alert("Refund failed: " + error.message);
+          refundButton.disabled = false;
+          refundButton.textContent = "REFUND CUSTOMER";
+        }
+      };
+
+      item.append(refundButton);
     }
 
     box.append(item);

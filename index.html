@@ -142,7 +142,8 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}#dashboard,#adminPanel{displ
 <button class="full" onclick="saveSettings()">Save Settings</button>
 <div class="notice">Do not use these browser-only prices to control real VTU transactions.</div>
 </section>
- 
+
+<!-- ADMIN DATA PLAN MANAGER -->
 <section class="card" id="adminDataPlansSection">
   <h2>📦 Admin Data Plan Manager</h2>
   <p>Add and manage data plans and their prices.</p>
@@ -202,6 +203,25 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}#dashboard,#adminPanel{displ
   </button>
 
   <div id="adminDataPlansList"></div>
+</section>
+
+
+<!-- ADMIN NETWORK PRICING MANAGER -->
+<section class="card" id="adminNetworkPricingSection"
+  style="display:none">
+
+  <h2>💰 Network Pricing Manager</h2>
+  <p>Manage data markup and airtime prices for each network.</p>
+
+  <div id="networkPricingList"></div>
+
+  <button type="button" id="saveNetworkPricingBtn" class="full">
+    Save Network Pricing
+  </button>
+
+  <p id="networkPricingMessage" class="notice"></p>
+</section>
+
 </section>
 
   <!-- ADMIN ALL ORDERS -->
@@ -887,11 +907,10 @@ async function loadFundingHistory(user) {
 }
 
 /* =========================================
-   ADMIN CHECK
+   ADMIN ACCESS CHECK
 ========================================= */
 
 async function checkAdmin(user) {
-  // Hide all admin sections first
   if ($("adminPanel")) $("adminPanel").style.display = "none";
 
   if (adminDataPlansSection) {
@@ -900,6 +919,10 @@ async function checkAdmin(user) {
 
   if ($("adminTestWalletSection")) {
     $("adminTestWalletSection").style.display = "none";
+  }
+
+  if ($("adminNetworkPricingSection")) {
+    $("adminNetworkPricingSection").style.display = "none";
   }
 
   currentUserIsAdmin = false;
@@ -919,7 +942,6 @@ async function checkAdmin(user) {
 
   if (!data) return false;
 
-  // Admin verified
   currentUserIsAdmin = true;
 
   if ($("adminPanel")) {
@@ -934,59 +956,222 @@ async function checkAdmin(user) {
     adminDataPlansSection.style.display = "block";
   }
 
-  // Show test wallet section only to verified admin
   if ($("adminTestWalletSection")) {
     $("adminTestWalletSection").style.display = "block";
+  }
+
+  if ($("adminNetworkPricingSection")) {
+    $("adminNetworkPricingSection").style.display = "block";
   }
 
   await Promise.all([
     window.loadAdminFundingRequests(),
     window.loadTestFundingRequests(),
-    loadAdminDataPlans()
+    loadAdminDataPlans(),
+    loadAdminNetworkPricing()
   ]);
 
   return true;
 }
 
+
 /* =========================================
-   ADMIN APPROVE / REJECT FUNDING
+   ADMIN NETWORK PRICING MANAGER
 ========================================= */
 
-async function reviewRequest(id, decision, isTest) {
-  if (!window.currentUser || !currentUserIsAdmin) {
-    msg(isTest ? "testAdminMessage" : "adminMessage", "Admin access required.", "red");
+const networkPricingList = $("networkPricingList");
+const networkPricingMessage = $("networkPricingMessage");
+const saveNetworkPricingBtn = $("saveNetworkPricingBtn");
+
+const supportedNetworks = ["MTN", "Airtel", "Glo", "9mobile"];
+
+function showNetworkPricingMessage(message, isError = false) {
+  if (!networkPricingMessage) return;
+
+  networkPricingMessage.textContent = message;
+  networkPricingMessage.style.color = isError ? "red" : "green";
+}
+
+async function loadAdminNetworkPricing() {
+  if (!currentUserIsAdmin || !networkPricingList) return;
+
+  networkPricingList.textContent = "Loading network prices...";
+
+  const { data, error } = await window.supabase
+    .from("vtu_network_pricing")
+    .select("network,data_markup_percent,airtime_cost_percent,airtime_sell_percent,is_active")
+    .order("network");
+
+  if (error) {
+    networkPricingList.textContent =
+      "Unable to load prices: " + error.message;
     return;
   }
 
-  const confirmation = isTest
-    ? "TEST ONLY: " + decision.toUpperCase() + " this test request?"
-    : "Confirm " + decision.toUpperCase() +
-      "? Verify that the money has arrived before approving.";
+  const pricingMap = Object.fromEntries(
+    (data || []).map(item => [item.network, item])
+  );
 
-  if (!confirm(confirmation)) return;
+  networkPricingList.innerHTML = supportedNetworks.map(network => {
+    const item = pricingMap[network];
 
-  let note = prompt("Admin note (optional):");
-  if (note === null) return;
+    if (!item) {
+      return `
+        <div class="card">
+          <h3>${network}</h3>
+          <p>Pricing record not found. Check Supabase.</p>
+        </div>
+      `;
+    }
 
-  note = note.trim();
+    return `
+      <div class="card" style="margin-top:12px">
+        <h3>${network}</h3>
 
-  if (note.length > 500) {
-    alert("Note must be 500 characters or fewer.");
-    return;
-  }
+        <label>Data Markup (%)</label>
+        <input type="number" min="0" step="0.01"
+          data-network="${network}"
+          data-field="data_markup_percent"
+          value="${Number(item.data_markup_percent)}">
 
-  const messageId = isTest ? "testAdminMessage" : "adminMessage";
-  msg(messageId, "Processing...");
+        <label>Airtime Provider Cost (%)</label>
+        <input type="number" min="0.01" max="200" step="0.01"
+          data-network="${network}"
+          data-field="airtime_cost_percent"
+          value="${Number(item.airtime_cost_percent)}">
 
-  try {
-    const functionName = isTest ?
-      "admin_review_funding_test" : "admin_review_funding";
+        <label>Airtime Customer Selling (%)</label>
+        <input type="number" min="0.01" max="200" step="0.01"
+          data-network="${network}"
+          data-field="airtime_sell_percent"
+          value="${Number(item.airtime_sell_percent)}">
 
-    const { data, error } = await window.supabase.rpc(functionName, {
-      p_request_id: id,
-      p_decision: decision,
-      p_admin_note: note || null
-    });
+        <label>
+          <input type="checkbox"
+            data-network="${network}"
+            data-field="is_active"
+            ${item.is_active ? "checked" : ""}>
+          Activate Network
+        </label>
+      </div>
+    `;
+  }).join("");
+
+  showNetworkPricingMessage("Network prices loaded successfully.");
+}
+
+
+/* =========================================
+   SAVE NETWORK PRICING
+========================================= */
+
+if (saveNetworkPricingBtn) {
+  saveNetworkPricingBtn.addEventListener("click", async () => {
+    if (!window.currentUser || !currentUserIsAdmin) {
+      showNetworkPricingMessage("Admin access required.", true);
+      return;
+    }
+
+    if (!networkPricingList) return;
+
+    const updates = [];
+
+    for (const network of supportedNetworks) {
+      const getInput = field =>
+        networkPricingList.querySelector(
+          `[data-network="${network}"][data-field="${field}"]`
+        );
+
+      const markupInput = getInput("data_markup_percent");
+      const costInput = getInput("airtime_cost_percent");
+      const sellInput = getInput("airtime_sell_percent");
+      const activeInput = getInput("is_active");
+
+      if (!markupInput || !costInput || !sellInput || !activeInput) {
+        showNetworkPricingMessage(
+          "Missing pricing fields for " + network, true
+        );
+        return;
+      }
+
+      const markup = Number(markupInput.value);
+      const cost = Number(costInput.value);
+      const selling = Number(sellInput.value);
+
+      if (!Number.isFinite(markup) || markup < 0) {
+        showNetworkPricingMessage(
+          "Invalid data markup for " + network, true
+        );
+        return;
+      }
+
+      if (!Number.isFinite(cost) || cost <= 0 || cost > 200) {
+        showNetworkPricingMessage(
+          "Airtime provider cost must be above 0 and at most 200 for " + network,
+          true
+        );
+        return;
+      }
+
+      if (!Number.isFinite(selling) || selling <= 0 || selling > 200) {
+        showNetworkPricingMessage(
+          "Airtime selling percentage must be above 0 and at most 200 for " + network,
+          true
+        );
+        return;
+      }
+
+      updates.push({
+        network,
+        data_markup_percent: markup,
+        airtime_cost_percent: cost,
+        airtime_sell_percent: selling,
+        is_active: activeInput.checked,
+        updated_at: new Date().toISOString()
+      });
+    }
+
+    saveNetworkPricingBtn.disabled = true;
+    saveNetworkPricingBtn.textContent = "Saving...";
+
+    try {
+      const results = await Promise.all(
+        updates.map(item =>
+          window.supabase
+            .from("vtu_network_pricing")
+            .update({
+              data_markup_percent: item.data_markup_percent,
+              airtime_cost_percent: item.airtime_cost_percent,
+              airtime_sell_percent: item.airtime_sell_percent,
+              is_active: item.is_active,
+              updated_at: item.updated_at
+            })
+            .eq("network", item.network)
+        )
+      );
+
+      const failed = results.find(result => result.error);
+
+      if (failed) throw failed.error;
+
+      showNetworkPricingMessage(
+        "All network prices saved successfully!"
+      );
+
+      await loadAdminDataPlans();
+
+    } catch (error) {
+      console.error("Network pricing save:", error);
+      showNetworkPricingMessage(
+        "Unable to save prices: " + error.message, true
+      );
+    } finally {
+      saveNetworkPricingBtn.disabled = false;
+      saveNetworkPricingBtn.textContent = "Save Network Pricing";
+    }
+  });
+}
+
 
     if (error) throw error;
 

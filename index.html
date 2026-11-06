@@ -172,12 +172,42 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}
 <button type="button" id="saveNetworkPricingBtn" class="full">Save Network Pricing</button>
 <p id="networkPricingMessage" class="message"></p>
 </section>
-
 <section class="card" id="adminTestWalletSection">
-<h2>🧪 Admin Test Wallet Credit</h2><p>Add ₦100 test balance to your own admin wallet for secure order testing. This is a one-time action if enforced by the database function.</p>
-<button type="button" id="addTestBalanceBtn" class="full">Add ₦100 Test Balance</button>
-<p id="testBalanceMessage" class="message"></p>
+    <h2>🧪 Isolated Test Wallet</h2>
+
+    <p>
+        This wallet is completely separate from your real wallet.
+        Use it only for testing orders.
+    </p>
+
+    <button
+        type="button"
+        id="addIsolatedTestBalanceBtn"
+        class="full">
+        Add ₦500 Test Balance
+    </button>
+
+    <p id="isolatedTestBalanceMessage" class="message"></p>
+
+    <hr>
+
+    <p>
+        <strong>Legacy Test Credit:</strong>
+        The old ₦100 button credits the real admin wallet.
+        Do not use it again.
+    </p>
+
+    <button
+        type="button"
+        id="addTestBalanceBtn"
+        class="full"
+        disabled>
+        Old ₦100 Test Credit — Disabled
+    </button>
+
+    <p id="testBalanceMessage" class="message"></p>
 </section>
+
 </section>
 </main>
 <footer><h3>AL-ILYAS VTU</h3><p>Fast, Reliable and Affordable Services.</p><p>© 2026 AL-ILYAS VTU</p></footer>
@@ -603,17 +633,41 @@ $("saveNetworkPricingBtn").addEventListener("click",async()=>{
 });
 
 /* ADMIN TEST WALLET CREDIT */
-$("addTestBalanceBtn").addEventListener("click",async()=>{
-  if(!window.currentUser||!currentUserIsAdmin)return alert("Admin access required.");
-  if(!confirm("Add ₦100 test credit to your admin wallet?"))return;
-  const btn=$("addTestBalanceBtn");btn.disabled=true;btn.textContent="Processing...";
-  try{
-    const {data,error}=await client.rpc("admin_add_test_balance");if(error)throw error;if(!data?.success)throw new Error(data?.message||"Test credit was not completed.");
-    msg("testBalanceMessage","Success! ₦100 added. New balance: "+naira(data.new_balance));await loadWallet(window.currentUser);
-  }catch(error){msg("testBalanceMessage",error.message,"red");}
-  finally{btn.disabled=false;btn.textContent="Add ₦100 Test Balance";}
-});
+$("addIsolatedTestBalanceBtn").addEventListener("click", async () => {
+  if (!window.currentUser || !currentUserIsAdmin) {
+    return alert("Admin access required.");
+  }
 
+  if (!confirm("Add ₦500 to your separate Test Wallet?")) return;
+
+  const btn = $("addIsolatedTestBalanceBtn");
+  btn.disabled = true;
+  btn.textContent = "Processing...";
+
+  try {
+    const { data, error } = await client.rpc(
+      "admin_add_isolated_test_balance"
+    );
+
+    if (error) throw error;
+
+    if (!data?.success) {
+      throw new Error(data?.message || "Test balance was not added.");
+    }
+
+    msg(
+      "isolatedTestBalanceMessage",
+      "Success! ₦500 added to isolated Test Wallet. New test balance: " +
+        naira(data.new_balance)
+    );
+
+  } catch (error) {
+    msg("isolatedTestBalanceMessage", error.message, "red");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Add ₦500 Test Balance";
+  }
+});
 /* DISPLAY AUTHENTICATED USER */
 async function displayUser(user){
   if(!user){

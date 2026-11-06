@@ -103,14 +103,45 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}
 <h3 style="color:#087c45;margin-top:25px">📋 Recent Wallet Transactions</h3><div id="walletTransactions"><p class="empty">Loading...</p></div>
 </section>
 
+
 <section class="card">
-<h2>📶 Buy Data</h2>
-<label for="dataNetwork">Network</label><select id="dataNetwork"><option value="">Select Network</option><option value="MTN">MTN</option><option value="Airtel">Airtel</option><option value="Glo">Glo</option><option value="9mobile">9mobile</option></select>
-<label for="dataPhone">Phone Number</label><input id="dataPhone" type="tel" maxlength="11" inputmode="numeric" placeholder="Enter phone number">
-<label for="dataPlan">Data Plan</label><select id="dataPlan"><option value="">Select Data Plan</option></select>
-<p style="margin-top:12px;font-weight:bold">Price: <span id="dataPrice">₦0.00</span></p>
-<button class="full" type="button" onclick="buyData()">Continue Data Order</button><div class="summary" id="dataSummary"></div>
+  <h2>📶 Buy Data</h2>
+
+  <label for="dataNetwork">Network</label>
+  <select id="dataNetwork">
+    <option value="">Select Network</option>
+    <option value="MTN">MTN</option>
+    <option value="Airtel">Airtel</option>
+    <option value="Glo">Glo</option>
+    <option value="9mobile">9mobile</option>
+  </select>
+
+  <label for="dataPhone">Phone Number</label>
+  <input id="dataPhone" type="tel" maxlength="11"
+    inputmode="numeric" placeholder="Enter phone number">
+
+  <label for="dataPlan">Data Plan</label>
+  <select id="dataPlan">
+    <option value="">Select Data Plan</option>
+  </select>
+
+  <p style="margin-top:12px;font-weight:bold">
+    Price: <span id="dataPrice">₦0.00</span>
+  </p>
+
+  <button class="full" type="button" onclick="buyData()">
+    Continue Data Order
+  </button>
+
+  <button class="full" type="button" id="testDataOrderBtn"
+    style="background:#805ad5;margin-top:10px">
+    🧪 Test Data Order (No Real Data)
+  </button>
+
+  <div class="summary" id="dataSummary"></div>
+  <div class="summary" id="testDataSummary"></div>
 </section>
+
 
 <section class="card">
 <h2>📱 Buy Airtime</h2>
@@ -474,6 +505,69 @@ window.buyData=async function(){
   }catch(error){console.error(error);alert("Unable to process data order: "+error.message);}
   finally{btn.disabled=false;btn.textContent="Continue Data Order";}
 };
+
+
+$("testDataOrderBtn").addEventListener("click", async () => {
+  const user = window.currentUser;
+  const network = $("dataNetwork").value;
+  const phone = $("dataPhone").value.trim();
+  const planCode = $("dataPlan").value;
+  const btn = $("testDataOrderBtn");
+
+  if (!user) {
+    alert("Please login before testing.");
+    $("authCard").scrollIntoView();
+    return;
+  }
+
+  if (!network || !planCode || !validPhone(phone)) {
+    alert("Enter a valid phone number, network and data plan.");
+    return;
+  }
+
+  if (!confirm(
+    "Run a TEST order using your separate Test Wallet? No real data will be sent."
+  )) return;
+
+  btn.disabled = true;
+  btn.textContent = "Testing...";
+
+  try {
+    const { data, error } = await client.rpc(
+      "create_test_vtu_order",
+      {
+        p_network: network,
+        p_phone_number: phone,
+        p_plan_code: planCode
+      }
+    );
+
+    if (error) throw error;
+
+    if (!data?.success) {
+      throw new Error(data?.message || "Test order failed.");
+    }
+
+    $("testDataSummary").textContent =
+      "TEST ORDER SUCCESSFUL\n" +
+      "Test Order ID: " + data.order_id + "\n" +
+      "Network: " + network + "\n" +
+      "Phone: " + phone + "\n" +
+      "Amount deducted: " + naira(data.amount) + "\n" +
+      "New Test Wallet Balance: " + naira(data.new_test_balance) + "\n" +
+      "Status: " + data.status + "\n" +
+      "No real data was sent.";
+
+  } catch (error) {
+    console.error(error);
+    $("testDataSummary").textContent =
+      "Test order error: " + error.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🧪 Test Data Order (No Real Data)";
+  }
+});
+  
 window.buyAirtime=async function(){
   const user=window.currentUser,network=$("airNetwork").value,phone=$("airPhone").value.trim(),amount=Number($("airAmount").value);
   if(!user){alert("Please login before ordering.");$("authCard").scrollIntoView();return;}

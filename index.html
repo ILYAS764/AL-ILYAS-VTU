@@ -646,8 +646,7 @@ window.loadAdminOrders=async function(){
     box.append(item);
   });
 };
-
-
+ 
 window.loadAdminTestOrders = async function () {
   const box = $("adminTestOrdersBox");
   const message = $("adminTestOrdersMessage");
@@ -694,11 +693,93 @@ window.loadAdminTestOrders = async function () {
       node("small", date(o.created_at))
     );
 
+    if (o.status === "successful") {
+      const failBtn = node("button", "MARK AS FAILED");
+      failBtn.type = "button";
+      failBtn.className = "danger full";
+
+      failBtn.onclick = async () => {
+        if (!confirm("Mark this TEST order as FAILED?")) return;
+
+        failBtn.disabled = true;
+
+        try {
+          const { data, error } = await client.rpc(
+            "admin_update_test_vtu_order_status",
+            {
+              p_order_id: o.id,
+              p_status: "failed"
+            }
+          );
+
+          if (error) throw error;
+          if (!data?.success) {
+            throw new Error(data?.message || "Status update failed.");
+          }
+
+          alert("Test order marked as FAILED.");
+          await window.loadAdminTestOrders();
+
+        } catch (error) {
+          alert("Unable to update test order: " + error.message);
+          failBtn.disabled = false;
+        }
+      };
+
+      item.append(failBtn);
+    }
+
+    if (o.status === "failed") {
+      const refundBtn = node("button", "REFUND TEST WALLET");
+      refundBtn.type = "button";
+      refundBtn.className = "full";
+
+      refundBtn.onclick = async () => {
+        if (!confirm(
+          "Refund " + naira(o.amount) +
+          " to this customer's TEST WALLET only?"
+        )) return;
+
+        refundBtn.disabled = true;
+        refundBtn.textContent = "REFUNDING...";
+
+        try {
+          const { data, error } = await client.rpc(
+            "admin_refund_test_vtu_order",
+            {
+              p_order_id: o.id
+            }
+          );
+
+          if (error) throw error;
+
+          if (!data?.success) {
+            throw new Error(data?.message || "Test refund failed.");
+          }
+
+          alert(
+            "Test refund successful!\n" +
+            "Refunded: " + naira(data.refunded_amount) + "\n" +
+            "New Test Wallet Balance: " +
+            naira(data.new_test_balance)
+          );
+
+          await window.loadAdminTestOrders();
+
+        } catch (error) {
+          alert("Test refund failed: " + error.message);
+          refundBtn.disabled = false;
+          refundBtn.textContent = "REFUND TEST WALLET";
+        }
+      };
+
+      item.append(refundBtn);
+    }
+
     box.append(item);
   });
 };
-    
-
+   
 /* ADMIN DATA PLAN MANAGER */
 const planForm=$("dataPlanForm"),planList=$("adminDataPlansList");
 function planMessage(text,isError=false){msg("dataPlanMessage",text,isError?"red":"green");}

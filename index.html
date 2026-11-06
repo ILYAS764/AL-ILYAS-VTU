@@ -179,6 +179,16 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}
 <div id="adminOrdersMessage" class="message"></div><div id="adminOrdersBox"></div>
 </section>
 
+<section class="card">
+  <h2>🧪 Test Orders</h2>
+  <p>Orders created using the isolated Test Wallet only.</p>
+  <button type="button" class="full" onclick="loadAdminTestOrders()">
+    Refresh Test Orders
+  </button>
+  <p id="adminTestOrdersMessage"></p>
+  <div id="adminTestOrdersBox"></div>
+</section>
+
 <section class="card" id="adminDataPlansSection">
 <h2>📦 Admin Data Plan Manager</h2><p>Add and manage data plans and their prices.</p>
 <form id="dataPlanForm">
@@ -636,6 +646,58 @@ window.loadAdminOrders=async function(){
     box.append(item);
   });
 };
+
+
+window.loadAdminTestOrders = async function () {
+  const box = $("adminTestOrdersBox");
+  const message = $("adminTestOrdersMessage");
+
+  if (!box || !message) return;
+
+  if (!currentUserIsAdmin) {
+    message.textContent = "Admin access required.";
+    return;
+  }
+
+  message.textContent = "Loading test orders...";
+  box.replaceChildren();
+
+  const { data, error } = await client
+    .from("test_vtu_orders")
+    .select("id,user_id,service_type,network,phone_number,plan_code,plan_name,amount,status,created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    message.textContent = "Unable to load test orders: " + error.message;
+    return;
+  }
+
+  if (!data?.length) {
+    message.textContent = "No test orders found.";
+    return;
+  }
+
+  message.textContent = data.length + " test order(s) found.";
+
+  data.forEach(o => {
+    const item = node("div", "", "order-item");
+
+    item.append(
+      node("p", "🧪 TEST DATA ORDER"),
+      node("p", `${o.network} | ${o.phone_number}`),
+      node("p", "Plan: " + (o.plan_name || o.plan_code || "N/A")),
+      node("p", "Amount: " + naira(o.amount)),
+      node("p", "Status: " + String(o.status).toUpperCase()),
+      node("small", "Test Order ID: " + o.id),
+      node("small", "Customer ID: " + o.user_id),
+      node("small", date(o.created_at))
+    );
+
+    box.append(item);
+  });
+};
+    
 
 /* ADMIN DATA PLAN MANAGER */
 const planForm=$("dataPlanForm"),planList=$("adminDataPlansList");

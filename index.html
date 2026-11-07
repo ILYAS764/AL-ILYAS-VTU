@@ -438,61 +438,153 @@ async function checkAdmin(user) {
 }
 
 /* ADMIN FUNDING REVIEW */
-async function reviewFundingRequest(id,decision,isTest) {
-  if(!currentUserIsAdmin)return;
-  const messageId=isTest?"testAdminMessage":"adminMessage";
-  const rpc=isTest?"admin_review_funding_test":"admin_review_funding";
-  const note=prompt("Optional admin note:") || null;
-  if(!confirm(`Confirm ${decision} for this ${isTest?"TEST":"REAL"} funding request?`))return;
-  msg(messageId,"Processing review...");
-  try{
-    const {data,error}=await client.rpc(rpc,{p_request_id:id,p_decision:decision,p_admin_note:note});
-    if(error)throw error;
-    if(!data||data.success!==true)throw new Error(data?.message||"Database did not confirm the action.");
-    msg(messageId,`Request ${decision} completed.`);
-    if(isTest)await window.loadTestFundingRequests();
-    else{
-      await window.loadAdminFundingRequests();
-      if(window.currentUser){await loadFundingHistory(window.currentUser);await loadWallet(window.currentUser);await loadTransactions(window.currentUser);}
+async function reviewFundingRequest(id, decision, isTest) {
+  if (!currentUserIsAdmin) return;
+
+  const messageId = isTest ? "testAdminMessage" : "adminMessage";
+  const rpc = isTest ? "admin_review_funding_test" : "admin_review_funding";
+
+  // Convert button labels to the exact decisions expected by Supabase
+  const rpcDecision =
+    decision === "approved" ? "approve" :
+    decision === "rejected" ? "reject" :
+    decision;
+
+  const note = prompt("Optional admin note:") || null;
+
+  if (!confirm(`Confirm ${decision} for this ${isTest ? "TEST" : "REAL"} funding request?`)) return;
+
+  msg(messageId, "Processing review...");
+
+  try {
+    const { data, error } = await client.rpc(rpc, {
+      p_request_id: id,
+      p_decision: rpcDecision,
+      p_admin_note: note
+    });
+
+    if (error) throw error;
+
+    if (!data || data.success !== true) {
+      throw new Error(data?.message || "Database did not confirm the action.");
     }
-  }catch(error){console.error(error);msg(messageId,"Review failed: "+error.message,"red");}
+
+    msg(messageId, `Request ${decision} completed.`);
+
+    if (isTest) {
+      await window.loadTestFundingRequests();
+    } else {
+      await window.loadAdminFundingRequests();
+
+      if (window.currentUser) {
+        await loadFundingHistory(window.currentUser);
+        await loadWallet(window.currentUser);
+        await loadTransactions(window.currentUser);
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    msg(messageId, "Review failed: " + error.message, "red");
+  }
 }
-function renderFundingRequests(rows,box,isTest) {
+
+function renderFundingRequests(rows, box, isTest) {
   box.replaceChildren();
-  if(!rows?.length){box.append(node("p","No funding requests found.","empty"));return;}
-  rows.forEach(r=>{
-    const item=node("div","","item");
-    [["Customer ID",r.user_id],["Amount",naira(r.amount)],["Bank",r.bank||"Test"],["Reference",r.reference],["Status",r.status],["Submitted",date(r.created_at)],["Admin note",r.admin_note]].forEach(([k,v])=>{if(v!==null&&v!==undefined&&v!=="")item.append(node("p",k+": "+v,k==="Status"?statusClass(r.status):""));});
-    if(r.status==="pending"){
-      const actions=node("div","","actions");
-      ["approved","rejected"].forEach(decision=>{
-        const b=node("button",decision.toUpperCase());b.type="button";
-        if(decision==="rejected")b.className="danger";
-        b.onclick=()=>reviewFundingRequest(r.id,decision,isTest);
+
+  if (!rows?.length) {
+    box.append(node("p", "No funding requests found.", "empty"));
+    return;
+  }
+
+  rows.forEach(r => {
+    const item = node("div", "", "item");
+
+    [
+      ["Customer ID", r.user_id],
+      ["Amount", naira(r.amount)],
+      ["Bank", r.bank || "Test"],
+      ["Reference", r.reference],
+      ["Status", r.status],
+      ["Submitted", date(r.created_at)],
+      ["Admin note", r.admin_note]
+    ].forEach(([k, v]) => {
+      if (v !== null && v !== undefined && v !== "") {
+        item.append(
+          node("p", k + ": " + v, k === "Status" ? statusClass(r.status) : "")
+        );
+      }
+    });
+
+    if (r.status === "pending") {
+      const actions = node("div", "", "actions");
+
+      ["approved", "rejected"].forEach(decision => {
+        const b = node("button", decision.toUpperCase());
+        b.type = "button";
+
+        if (decision === "rejected") b.className = "danger";
+
+        b.onclick = () => reviewFundingRequest(r.id, decision, isTest);
         actions.append(b);
       });
+
       item.append(actions);
     }
+
     box.append(item);
   });
 }
-window.loadAdminFundingRequests=async function(){
-  const box=$("adminFundingList");if(!box)return;
-  if(!currentUserIsAdmin){box.textContent="Admin access required.";return;}
-  box.textContent="Loading real funding requests...";
-  const {data,error}=await client.from("wallet_funding_requests").select("id,user_id,amount,bank,reference,status,created_at,admin_note").order("created_at",{ascending:false}).limit(100);
-  if(error){box.textContent="Unable to load requests: "+error.message;return;}
-  renderFundingRequests(data,box,false);
-};
-window.loadTestFundingRequests=async function(){
-  const box=$("testFundingList");if(!box)return;
-  if(!currentUserIsAdmin){box.textContent="Admin access required.";return;}
-  box.textContent="Loading test requests...";
-  const {data,error}=await client.from("wallet_funding_test_requests").select("id,user_id,amount,reference,status,created_at,admin_note").order("created_at",{ascending:false}).limit(100);
-  if(error){box.textContent="Unable to load test requests: "+error.message;return;}
-  renderFundingRequests(data,box,true);
+
+window.loadAdminFundingRequests = async function() {
+  const box = $("adminFundingList");
+  if (!box) return;
+
+  if (!currentUserIsAdmin) {
+    box.textContent = "Admin access required.";
+    return;
+  }
+
+  box.textContent = "Loading real funding requests...";
+
+  const { data, error } = await client
+    .from("wallet_funding_requests")
+    .select("id,user_id,amount,bank,reference,status,created_at,admin_note")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    box.textContent = "Unable to load requests: " + error.message;
+    return;
+  }
+
+  renderFundingRequests(data, box, false);
 };
 
+window.loadTestFundingRequests = async function() {
+  const box = $("testFundingList");
+  if (!box) return;
+
+  if (!currentUserIsAdmin) {
+    box.textContent = "Admin access required.";
+    return;
+  }
+
+  box.textContent = "Loading test requests...";
+
+  const { data, error } = await client
+    .from("wallet_funding_test_requests")
+    .select("id,user_id,amount,reference,status,created_at,admin_note")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    box.textContent = "Unable to load requests: " + error.message;
+    return;
+  }
+
+  renderFundingRequests(data, box, true);
+};
+   
 /* SECURE DATA AND AIRTIME ORDERS */
 function requestIdFor(type,signature) {
   const prop=type==="data"?"_pendingData":"_pendingAir";

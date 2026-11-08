@@ -810,6 +810,7 @@ window.buyAirtime = async function() {
     );
 
     if (quoteError) throw quoteError;
+
     if (!quote?.success) {
       throw new Error(quote?.message || "Unable to get airtime price.");
     }
@@ -860,6 +861,7 @@ window.buyAirtime = async function() {
         p_service_type: "airtime",
         p_network: network,
         p_phone_number: phone,
+        p_expected_amount: price,
         p_plan_code: null,
         p_airtime_face_value: amount
       }
@@ -879,7 +881,8 @@ window.buyAirtime = async function() {
       "Phone: " + phone,
       "Airtime Value: " + naira(amount),
       "Customer Pays: " + naira(data.amount),
-      "New Wallet Balance: " + naira(data.new_balance),
+      "New Wallet Balance: " +
+        (data.new_balance == null ? "Please refresh your wallet" : naira(data.new_balance)),
       "Status: " + data.status,
       "Wallet deduction successful.",
       "Airtime delivery is not yet confirmed."

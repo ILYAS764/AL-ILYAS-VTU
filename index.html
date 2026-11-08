@@ -591,23 +591,122 @@ function requestIdFor(type,signature) {
   if(!window[prop]||window[prop].signature!==signature)window[prop]={signature,id:makeRequestId()};
   return window[prop].id;
 }
-window.buyData=async function(){
-  const user=window.currentUser,network=$("dataNetwork").value,phone=$("dataPhone").value.trim(),planCode=$("dataPlan").value;
-  if(!user){alert("Please login before ordering.");$("authCard").scrollIntoView();return;}
-  if(!network||!planCode||!validPhone(phone)){alert("Enter a valid Nigerian phone number, network and active data plan.");return;}
-  const signature=JSON.stringify({network,phone,planCode}),requestId=requestIdFor("data",signature),btn=document.querySelector('button[onclick="buyData()"]');
-  btn.disabled=true;btn.textContent="Processing...";
-  try{
-    const {data,error}=await client.rpc("create_secure_vtu_order",{p_request_id:requestId,p_service_type:"data",p_network:network,p_phone_number:phone,p_plan_code:planCode,p_airtime_face_value:null});
-    if(error)throw error;if(!data?.success)throw new Error(data?.message||"Order could not be processed.");
-    window._pendingData=null;
-    const plan=publicPlans.find(p=>p.plan_code===planCode);
-    showSummary("dataSummary","Data Order Summary",["Order ID: "+data.order_id,"Network: "+network,"Phone: "+phone,"Plan: "+(plan?.plan_name||planCode),"Amount: "+naira(data.amount),"New Wallet Balance: "+naira(data.new_balance),"Status: "+data.status,"Wallet deduction successful.","Data delivery is not yet confirmed."]);
-    await loadWallet(user);await window.loadCustomerOrders();
-  }catch(error){console.error(error);alert("Unable to process data order: "+error.message);}
-  finally{btn.disabled=false;btn.textContent="Continue Data Order";}
-};
 
+window.buyData = async function() {
+  const user = window.currentUser;
+  const network = $("dataNetwork").value;
+  const phone = $("dataPhone").value.trim();
+  const planCode = $("dataPlan").value;
+  const btn = document.querySelector('button[onclick="buyData()"]');
+
+  if (!user) {
+    alert("Please login before ordering.");
+    $("authCard").scrollIntoView();
+    return;
+  }
+
+  if (!network || !planCode || !validPhone(phone)) {
+    alert("Enter a valid Nigerian phone number, network and active data plan.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Checking price...";
+
+  try {
+    // Get price preview without deducting money
+    const { data: quote, error: quoteError } = await client.rpc(
+      "get_vtu_order_quote",
+      {
+        p_service_type: "data",
+        p_network: network,
+        p_plan_code: planCode,
+        p_airtime_face_value: null
+      }
+    );
+
+    if (quoteError) throw quoteError;
+    if (!quote?.success) throw new Error("Unable to get data price.");
+
+    const plan = publicPlans.find(p => p.plan_code === planCode);
+    const price = Number(quote.selling_price);
+
+    if (!Number.isFinite(price) || price <= 0) {
+      throw new Error("Invalid data price.");
+    }
+
+    // Show order details before purchase
+    showSummary("dataSummary", "Review Your Data Order", [
+      "Network: " + network,
+      "Phone: " + phone,
+      "Plan: " + (plan?.plan_name || planCode),
+      "Amount to Pay: " + naira(price),
+      "Status: Awaiting your confirmation",
+      "No money has been deducted yet."
+    ]);
+
+    const confirmed = confirm(
+      "PLEASE REVIEW YOUR DATA ORDER\n\n" +
+      "Network: " + network + "\n" +
+      "Phone: " + phone + "\n" +
+      "Plan: " + (plan?.plan_name || planCode) + "\n" +
+      "Amount: " + naira(price) + "\n\n" +
+      "Confirm purchase? Your wallet will be charged."
+    );
+
+    if (!confirmed) {
+      $("dataSummary").style.display = "none";
+      alert("Purchase cancelled. No money was deducted.");
+      return;
+    }
+
+    btn.textContent = "Processing purchase...";
+
+    const signature = JSON.stringify({ network, phone, planCode });
+    const requestId = requestIdFor("data", signature);
+
+    const { data, error } = await client.rpc(
+      "create_secure_vtu_order",
+      {
+        p_request_id: requestId,
+        p_service_type: "data",
+        p_network: network,
+        p_phone_number: phone,
+        p_plan_code: planCode,
+        p_airtime_face_value: null
+      }
+    );
+
+    if (error) throw error;
+    if (!data?.success) {
+      throw new Error(data?.message || "Order could not be processed.");
+    }
+
+    window._pendingData = null;
+
+    showSummary("dataSummary", "Data Order Result", [
+      "Order ID: " + data.order_id,
+      "Network: " + network,
+      "Phone: " + phone,
+      "Plan: " + (plan?.plan_name || planCode),
+      "Amount: " + naira(data.amount),
+      "New Wallet Balance: " + naira(data.new_balance),
+      "Status: " + data.status,
+      "Wallet deduction successful.",
+      "Data delivery is not yet confirmed."
+    ]);
+
+    await loadWallet(user);
+    await window.loadCustomerOrders();
+
+  } catch (error) {
+    console.error(error);
+    alert("Unable to process data order: " + error.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Continue Data Order";
+  }
+};
 
 $("testDataOrderBtn").addEventListener("click", async () => {
   const user = window.currentUser;
@@ -670,27 +769,131 @@ $("testDataOrderBtn").addEventListener("click", async () => {
   }
 });
   
-window.buyAirtime=async function(){
-  const user=window.currentUser,network=$("airNetwork").value,phone=$("airPhone").value.trim(),amount=Number($("airAmount").value);
-  if(!user){alert("Please login before ordering.");$("authCard").scrollIntoView();return;}
-  if(!network||!validPhone(phone)||!Number.isSafeInteger(amount)||amount<50||amount>100000){alert("Enter valid airtime details.");return;}
-  const signature=JSON.stringify({network,phone,amount}),requestId=requestIdFor("airtime",signature),btn=document.querySelector('button[onclick="buyAirtime()"]');
-  btn.disabled=true;btn.textContent="Processing...";
-  try{
-    const {data,error}=await client.rpc("create_secure_vtu_order",{p_request_id:requestId,p_service_type:"airtime",p_network:network,p_phone_number:phone,p_plan_code:null,p_airtime_face_value:amount});
-    if(error)throw error;if(!data?.success)throw new Error(data?.message||"Airtime order could not be processed.");
-    window._pendingAir=null;
-    showSummary("airSummary","Airtime Order Summary",["Order ID: "+data.order_id,"Network: "+network,"Phone: "+phone,"Airtime Value: "+naira(amount),"Customer Pays: "+naira(data.amount),"New Wallet Balance: "+naira(data.new_balance),"Status: "+data.status,"Wallet deduction successful.","Airtime delivery is not yet confirmed."]);
-    await loadWallet(user);await window.loadCustomerOrders();
-  }catch(error){console.error(error);alert("Unable to process airtime order: "+error.message);}
-  finally{btn.disabled=false;btn.textContent="Continue Airtime Order";}
-};
-$("airAmount").addEventListener("input",()=>{
-  const amount=Number($("airAmount").value);
-  $("discountValue").textContent=Number.isSafeInteger(amount)&&amount>=50&&amount<=100000?"Calculated by secure pricing":"₦0.00";
-  $("payable").textContent=Number.isSafeInteger(amount)&&amount>=50&&amount<=100000?"Confirmed at checkout":"₦0.00";
-});
+window.buyAirtime = async function() {
+  const user = window.currentUser;
+  const network = $("airNetwork").value;
+  const phone = $("airPhone").value.trim();
+  const amount = Number($("airAmount").value);
+  const btn = document.querySelector('button[onclick="buyAirtime()"]');
 
+  if (!user) {
+    alert("Please login before ordering.");
+    $("authCard").scrollIntoView();
+    return;
+  }
+
+  if (
+    !network ||
+    !validPhone(phone) ||
+    !Number.isSafeInteger(amount) ||
+    amount < 50 ||
+    amount > 100000
+  ) {
+    alert("Enter valid airtime details.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Checking price...";
+
+  try {
+    const { data: quote, error: quoteError } = await client.rpc(
+      "get_vtu_order_quote",
+      {
+        p_service_type: "airtime",
+        p_network: network,
+        p_plan_code: null,
+        p_airtime_face_value: amount
+      }
+    );
+
+    if (quoteError) throw quoteError;
+    if (!quote?.success) {
+      throw new Error(quote?.message || "Unable to get airtime price.");
+    }
+
+    const price = Number(quote.selling_price);
+
+    if (!Number.isFinite(price) || price <= 0) {
+      throw new Error("Invalid airtime price.");
+    }
+
+    const discount = amount - price;
+
+    showSummary("airSummary", "Review Your Airtime Order", [
+      "Network: " + network,
+      "Phone: " + phone,
+      "Airtime Value: " + naira(amount),
+      "Discount: " + naira(discount),
+      "Customer Pays: " + naira(price),
+      "Status: Awaiting your confirmation",
+      "No money has been deducted yet."
+    ]);
+
+    const confirmed = confirm(
+      "PLEASE REVIEW YOUR AIRTIME ORDER\n\n" +
+      "Network: " + network + "\n" +
+      "Phone: " + phone + "\n" +
+      "Airtime Value: " + naira(amount) + "\n" +
+      "Discount: " + naira(discount) + "\n" +
+      "Customer Pays: " + naira(price) + "\n\n" +
+      "Confirm purchase? Your wallet will be charged."
+    );
+
+    if (!confirmed) {
+      $("airSummary").style.display = "none";
+      alert("Purchase cancelled. No money was deducted.");
+      return;
+    }
+
+    btn.textContent = "Processing purchase...";
+
+    const signature = JSON.stringify({ network, phone, amount });
+    const requestId = requestIdFor("airtime", signature);
+
+    const { data, error } = await client.rpc(
+      "create_secure_vtu_order",
+      {
+        p_request_id: requestId,
+        p_service_type: "airtime",
+        p_network: network,
+        p_phone_number: phone,
+        p_plan_code: null,
+        p_airtime_face_value: amount
+      }
+    );
+
+    if (error) throw error;
+
+    if (!data?.success) {
+      throw new Error(data?.message || "Airtime order could not be processed.");
+    }
+
+    window._pendingAir = null;
+
+    showSummary("airSummary", "Airtime Order Result", [
+      "Order ID: " + data.order_id,
+      "Network: " + network,
+      "Phone: " + phone,
+      "Airtime Value: " + naira(amount),
+      "Customer Pays: " + naira(data.amount),
+      "New Wallet Balance: " + naira(data.new_balance),
+      "Status: " + data.status,
+      "Wallet deduction successful.",
+      "Airtime delivery is not yet confirmed."
+    ]);
+
+    await loadWallet(user);
+    await window.loadCustomerOrders();
+
+  } catch (error) {
+    console.error(error);
+    alert("Unable to process airtime order: " + error.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Continue Airtime Order";
+  }
+};
 /* CUSTOMER AND ADMIN ORDERS */
 window.loadCustomerOrders=async function(){
   const box=$("customerOrdersBox"),message=$("customerOrdersMessage");if(!box||!message)return;

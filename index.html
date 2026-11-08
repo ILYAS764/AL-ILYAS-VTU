@@ -614,7 +614,6 @@ window.buyData = async function() {
   btn.textContent = "Checking price...";
 
   try {
-    // Get price preview without deducting money
     const { data: quote, error: quoteError } = await client.rpc(
       "get_vtu_order_quote",
       {
@@ -626,7 +625,9 @@ window.buyData = async function() {
     );
 
     if (quoteError) throw quoteError;
-    if (!quote?.success) throw new Error("Unable to get data price.");
+    if (!quote?.success) {
+      throw new Error(quote?.message || "Unable to get data price.");
+    }
 
     const plan = publicPlans.find(p => p.plan_code === planCode);
     const price = Number(quote.selling_price);
@@ -635,7 +636,6 @@ window.buyData = async function() {
       throw new Error("Invalid data price.");
     }
 
-    // Show order details before purchase
     showSummary("dataSummary", "Review Your Data Order", [
       "Network: " + network,
       "Phone: " + phone,
@@ -672,6 +672,7 @@ window.buyData = async function() {
         p_service_type: "data",
         p_network: network,
         p_phone_number: phone,
+        p_expected_amount: price,
         p_plan_code: planCode,
         p_airtime_face_value: null
       }
@@ -690,7 +691,8 @@ window.buyData = async function() {
       "Phone: " + phone,
       "Plan: " + (plan?.plan_name || planCode),
       "Amount: " + naira(data.amount),
-      "New Wallet Balance: " + naira(data.new_balance),
+      "New Wallet Balance: " +
+        (data.new_balance == null ? "Please refresh your wallet" : naira(data.new_balance)),
       "Status: " + data.status,
       "Wallet deduction successful.",
       "Data delivery is not yet confirmed."

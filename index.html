@@ -83,26 +83,48 @@ hr{border:0;border-top:1px solid #eee;margin:20px 0}
 <button type="button" onclick="loadCustomerOrders()">Refresh My Orders</button>
 <div id="customerOrdersMessage" class="message"></div><div id="customerOrdersBox"></div>
 </section>
+  
+<section class="card" id="walletFundingSection">
+  <h3 style="color:#087c45">💳 Add Money to My Wallet</h3>
 
-<section class="card">
-<h3 style="color:#087c45">💳 Fund My Wallet</h3>
-<p class="small-note">Transfer money to one of the accounts below, then submit your transaction details.</p>
-<label for="fundAmount">Amount (₦)</label><input id="fundAmount" type="number" min="100" max="1000000" step="1" placeholder="Minimum ₦100">
-<label for="fundBank">Select Bank</label>
-<select id="fundBank"><option value="">Select payment bank</option><option value="OPay">OPay</option><option value="Moniepoint">Moniepoint</option></select>
-<div class="bank-details" id="bankDetails">
-<p><b>Bank:</b> <span id="bankName"></span></p>
-<p><b>Account Name:</b> ILIYASU MUHAMMAD</p>
-<p><b>Account Number:</b> <span id="bankAccount"></span></p>
-</div>
-<label for="fundReference">Transaction Reference</label><input id="fundReference" maxlength="100" placeholder="Enter your bank transfer reference">
-<div class="funding-note"><b>Important:</b> Your request remains pending until the administrator verifies the payment. Entering a reference does not automatically add money to your wallet.</div>
-<button class="full" id="fundButton" type="button" onclick="submitFundingRequest()">Submit Funding Request</button>
-<p id="fundMessage" class="message" aria-live="polite"></p>
-<h3 style="color:#087c45;margin-top:25px">📑 My Funding History</h3><div id="fundingHistory"><p class="empty">Loading...</p></div>
-<h3 style="color:#087c45;margin-top:25px">📋 Recent Wallet Transactions</h3><div id="walletTransactions"><p class="empty">Loading...</p></div>
+  <p class="small-note">
+    Fund your wallet securely using Paybeta payment checkout.
+  </p>
+
+  <label for="fundAmount">Amount (₦)</label>
+  <input
+    id="fundAmount"
+    type="number"
+    min="100"
+    max="1000000"
+    step="1"
+    placeholder="Enter amount (minimum ₦100)"
+  >
+
+  <div class="funding-note">
+    <b>Secure Payment:</b> Your payment will be processed through
+    Paybeta. Your wallet will only be credited after payment
+    verification is successful.
+  </div>
+
+  <button
+    class="full"
+    id="fundButton"
+    type="button"
+    onclick="addMoneyWithPaybeta()">
+    💳 Add Money
+  </button>
+
+  <p id="fundMessage" class="message" aria-live="polite"></p>
+
+  <h3 style="color:#087c45;margin-top:25px">
+    📋 Recent Wallet Transactions
+  </h3>
+
+  <div id="walletTransactions">
+    <p class="empty">Loading...</p>
+  </div>
 </section>
-
 
 <section class="card">
   <h2>📶 Buy Data</h2>
@@ -259,7 +281,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 /* IMPORTANT: replace the placeholder with your Supabase PUBLIC/Publishable key only.
    Never put a service_role or secret key in a browser file. */
 const SUPABASE_URL = "https://bfmsbdgjdaiqmypcuxce.supabase.co";
-const SUPABASE_KEY = "sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
+const SUPABASE_KEY = "secret key";
 
 const $ = id => document.getElementById(id);
 const client = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -399,28 +421,64 @@ async function loadFundingHistory(user) {
 }
 
 /* FUNDING REQUEST SUBMISSION */
-window.submitFundingRequest = async function() {
-  const user=window.currentUser, amount=Number($("fundAmount").value), bank=$("fundBank").value, reference=$("fundReference").value.trim();
-  if(!user)return msg("fundMessage","Please login first.","red");
-  if(!Number.isSafeInteger(amount)||amount<100||amount>1000000)return msg("fundMessage","Enter an amount between ₦100 and ₦1,000,000.","red");
-  if(!bankAccounts[bank])return msg("fundMessage","Select OPay or Moniepoint.","red");
-  if(reference.length<3||reference.length>100)return msg("fundMessage","Reference must be 3–100 characters.","red");
-  const btn=$("fundButton");btn.disabled=true;btn.textContent="Submitting...";
-  try{
-    const {error}=await client.from("wallet_funding_requests").insert({user_id:user.id,amount,bank,reference});
-    if(error){if(error.code==="23505")throw new Error("This reference has already been submitted.");throw error;}
-    $("fundAmount").value="";$("fundBank").value="";$("fundReference").value="";$("bankDetails").style.display="none";
-    msg("fundMessage","Request submitted. It is pending verification.");
-    await loadFundingHistory(user);
-    if(currentUserIsAdmin)await window.loadAdminFundingRequests();
-  }catch(error){msg("fundMessage",error.message,"red");}
-  finally{btn.disabled=false;btn.textContent="Submit Funding Request";}
+window.addMoneyWithPaybeta = async function () {
+  const user = window.currentUser;
+  const amount = Number($("fundAmount").value);
+  const btn = $("fundButton");
+
+  if (!user) {
+    msg("fundMessage", "Please login first.", "red");
+    return;
+  }
+
+  if (!Number.isSafeInteger(amount) || amount < 100 || amount > 1000000) {
+    msg(
+      "fundMessage",
+      "Enter an amount between ₦100 and ₦1,000,000.",
+      "red"
+    );
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = "Connecting to Paybeta...";
+
+  msg("fundMessage", "Preparing secure checkout...");
+
+  try {
+    const { data, error } = await client.functions.invoke(
+      "paybeta-wallet-create",
+      {
+        body: { amount: amount }
+      }
+    );
+
+    if (error) throw error;
+
+    if (!data || !data.success || !data.checkout_url) {
+      throw new Error(
+        data?.message || "Checkout could not be created."
+      );
+    }
+
+    msg("fundMessage", "Opening Paybeta checkout...");
+
+    window.location.href = data.checkout_url;
+
+  } catch (error) {
+    console.error("Paybeta funding error:", error);
+
+    msg(
+      "fundMessage",
+      "Unable to start payment: " +
+      (error.message || "Please try again."),
+      "red"
+    );
+
+    btn.disabled = false;
+    btn.textContent = "💳 Add Money";
+  }
 };
-$("fundBank").addEventListener("change",()=>{
-  const bank=$("fundBank").value;
-  if(!bankAccounts[bank]){$("bankDetails").style.display="none";return;}
-  $("bankName").textContent=bank;$("bankAccount").textContent=bankAccounts[bank];$("bankDetails").style.display="block";
-});
 
 /* ADMIN PERMISSION */
 async function checkAdmin(user) {
@@ -1258,8 +1316,7 @@ client.auth.onAuthStateChange((event,session)=>{
   if(event==="SIGNED_OUT")setTimeout(()=>displayUser(null),0);
 });
 
-if(SUPABASE_KEY==="sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD"||!SUPABASE_KEY){
-  msg("authMessage","Add your Supabase Publishable key in the JavaScript section before using the website.","red");
+if(SUPABASE_KEY==="hidden key"||!SUPABASE_KEY){
 }else{
   const {data:{session},error}=await client.auth.getSession();
   if(error)console.error("Session restore:",error.message);

@@ -281,7 +281,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 /* IMPORTANT: replace the placeholder with your Supabase PUBLIC/Publishable key only.
    Never put a service_role or secret key in a browser file. */
 const SUPABASE_URL = "https://bfmsbdgjdaiqmypcuxce.supabase.co";
-const SUPABASE_KEY = "secret key";
+const SUPABASE_KEY = "sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD";
 
 const $ = id => document.getElementById(id);
 const client = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1316,7 +1316,7 @@ client.auth.onAuthStateChange((event,session)=>{
   if(event==="SIGNED_OUT")setTimeout(()=>displayUser(null),0);
 });
 
-if(SUPABASE_KEY==="hidden key"||!SUPABASE_KEY){
+if(SUPABASE_KEY==="sb_publishable_LeKMJamDpZJ8tBAdO-eotw_qTkPd0hD"||!SUPABASE_KEY){
 }else{
   const {data:{session},error}=await client.auth.getSession();
   if(error)console.error("Session restore:",error.message);
